@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Список курсов{% endblock %}
+{% block title %}Список курсов / StudyOn{% endblock %}
 
 {% block body %}
     <h1>Список курсов</h1>
@@ -9,7 +9,7 @@
         <tbody>
         {% for course in courses %}
             <tr>
-                <td><a href="/{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }}</a></td>
+                <td><a href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }}</a></td>
                 <td>{{ course.description }}</td>
             </tr>
         {% else %}
@@ -20,5 +20,5 @@
         </tbody>
     </table>
 
-    <a href="{{ path('app_course_new') }}">Create new</a>
+    <a href="{{ path('app_course_new') }}">Создать новый</a>
 {% endblock %}

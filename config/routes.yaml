@@ -9,3 +9,10 @@
 
 controllers:
     resource: routing.controllers
+
+homepage:
+    path: /
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController
+    defaults:
+        path: '/courses'
+        permanent: true

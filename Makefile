@@ -4,6 +4,15 @@ PHP=$(COMPOSE) exec php
 CONSOLE=$(PHP) bin/console
 COMPOSER=$(PHP) composer
 
+help:
+	@echo "up			запуск контейнеров"
+	@echo "down			остановка контейнеров"
+	@echo "clear		очистка кэша"
+	@echo "migration	создание миграций"
+	@echo "migrate		применение миграций"
+	@echo "fixtload		загрузка фикстур"
+
+
 up:
 	@${COMPOSE} ${ENV_FILES} up -d
 

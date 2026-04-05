@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Course;
 use App\Entity\Lesson;
 use App\Form\LessonType;
 use App\Repository\LessonRepository;
@@ -26,14 +27,26 @@ final class LessonController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $lesson = new Lesson();
+
+        // Поиск курса, с которого совершили редирект на создание
+        $source_course = $request->query->get('course_id', null);
+        if ($source_course !== null && $lesson->getCourse() === null) {
+            $course = $entityManager->getRepository(Course::class)->find($source_course);
+            if ($course !== null) {
+                $lesson->setCourse($course);
+                $lesson->setIndex($course->getLessons()->count() + 1);
+            } else {
+                $lesson->setIndex(1);
+            }
+        }
+
         $form = $this->createForm(LessonType::class, $lesson);
         $form->handleRequest($request);
-
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($lesson);
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_lesson_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_lesson_show', ['id' => $lesson->getId()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('lesson/new.html.twig', [
@@ -59,7 +72,7 @@ final class LessonController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
 
-            return $this->redirectToRoute('app_lesson_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_lesson_show', ['id'=> $lesson->getId()], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('lesson/edit.html.twig', [
@@ -71,11 +84,12 @@ final class LessonController extends AbstractController
     #[Route('/{id}', name: 'app_lesson_delete', methods: ['POST'])]
     public function delete(Request $request, Lesson $lesson, EntityManagerInterface $entityManager): Response
     {
+        $course_id = $lesson->getCourse()->getId();
         if ($this->isCsrfTokenValid('delete'.$lesson->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($lesson);
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_lesson_index', [], Response::HTTP_SEE_OTHER);
+        return $this->redirectToRoute('app_course_show', ['id' => $course_id], Response::HTTP_SEE_OTHER);
     }
 }

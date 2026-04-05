@@ -1,3 +1,34 @@
 body {
     background-color: skyblue;
 }
+
+.button-group {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    gap: 3px;
+}
+
+nav span:last-of-type {
+    color: black;
+}
+
+form label {
+    display: block;
+}
+
+form {
+    display: flex;
+    box-sizing: content-box;
+    width: min-content;
+    flex-direction: column;
+    justify-content: flex-start;
+    justify-items: start;
+}
+form button {
+    display: flex;
+    justify-self: center;
+    align-self: center;
+    flex-direction: row;
+    width: min-content;
+}

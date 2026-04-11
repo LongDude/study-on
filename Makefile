@@ -31,4 +31,10 @@ migrate:
 fixtload:
 	@${CONSOLE} doctrine:fixtures:load
 
+encore_dev:
+	@${COMPOSE} run node yarn encore dev
+
+encore_prod:
+	@${COMPOSE} run node yarn encore production
+
 -include local.mk

@@ -12,6 +12,7 @@ services:
       - "${NGINX_PORT}:80"
     links:
       - php
+
   postgres:
     ports:  #Нельзя использовать проброс портов на реальном проекте
       - "127.0.0.1:5432:5432"
@@ -43,5 +44,14 @@ services:
     links:
       - postgres
 
+  node:
+    image: node:alpine
+    environment:
+        - YARN_CACHE_FOLDER=/yarn
+    working_dir: /app
+    user: ${UID:-1000}:${GID:-1000}
+    volumes:
+        - ${PWD}:/app
+        - ${HOME}/.yarn:/yarn
 volumes:
     postgres_data:

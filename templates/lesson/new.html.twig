@@ -3,18 +3,13 @@
 {% block title %}Новый урок/StudyOn{% endblock %}
 
 {% block body %}
-    <nav>
+    <nav aria-label="breadcrumb">
         <span>StudyOn</span>
         /
-        {% if lesson.course != null %}
-            <a href="{{ path('app_course_index') }}">Список курсов</a>
-            /
-            <a href="{{ path('app_course_show', {'id': lesson.course.id}) }}">{{ lesson.course.name }}</a>
-            /
-        {% else %}
-            <a href="{{ path("app_lesson_index") }}">Список уроков</a>
-            /
-        {% endif %}
+        <a href="{{ path('app_course_index') }}">Список курсов</a>
+        /
+        <a href="{{ path('app_course_show', {'id': lesson.course.id}) }}">{{ lesson.course.name }}</a>
+        /
         <span>Создать новый урок</span>
     </nav>
 

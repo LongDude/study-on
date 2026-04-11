@@ -15,22 +15,17 @@
     <p> {{ course.description }}</p>
 
     <h2>Доступные уроки:</h2>
-    <ul>
-        <style>
-            ul { list-style: none; }
-        </style>
+    <ul class="unmarked-list">
         {% for lesson in course.lessons %}
             <li>
-                <div style="margin: 0; line-height: 0.3em">
-
-                <h4>
-                    {{ lesson.index }}. <a href="{{ path('app_lesson_show', {'id': lesson.id}) }}">{{ lesson.name }}</a>
-                </h4>
-                <p>
-                    {{ lesson.content }}
-                </p>
+                <div>
+                    <h4>
+                        {{ lesson.index }}. <a href="{{ path('app_lesson_show', {'id': lesson.id}) }}">{{ lesson.name }}</a>
+                    </h4>
+                    <p>
+                        {{ lesson.content }}
+                    </p>
                 </div>
-
             </li>
         {% else %}
             <li>Уроки не найдены</li>

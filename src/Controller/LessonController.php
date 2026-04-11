@@ -15,14 +15,6 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/lessons')]
 final class LessonController extends AbstractController
 {
-    #[Route(name: 'app_lesson_index', methods: ['GET'])]
-    public function index(LessonRepository $lessonRepository): Response
-    {
-        return $this->render('lesson/index.html.twig', [
-            'lessons' => $lessonRepository->findAll(),
-        ]);
-    }
-
     #[Route('/new', name: 'app_lesson_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {

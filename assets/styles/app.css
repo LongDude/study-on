@@ -1,5 +1,14 @@
 body {
-    background-color: skyblue;
+    background-color: darkseagreen;
+}
+
+.unmarked-list {
+    list-style: none;
+}
+
+.unmarked-list li {
+    margin: 0;
+    line-height: 0.3em
 }
 
 .button-group {
@@ -7,6 +16,10 @@ body {
     flex-direction: row;
     justify-content: start;
     gap: 3px;
+}
+
+nav {
+    color: dimgray;
 }
 
 nav span:last-of-type {

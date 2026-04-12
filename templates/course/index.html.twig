@@ -2,27 +2,32 @@
 
 {% block title %}Список курсов / StudyOn{% endblock %}
 
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Список курсов</li>
+{% endblock %}
+
 {% block body %}
-    <nav>
-        <span>StudyOn</span> / <span>Список курсов</span>
-    </nav>
 
-    <h1>Список курсов</h1>
-
-    <table>
-        <tbody>
+    <div class="row mb-3">
         {% for course in courses %}
-            <tr>
-                <td><a href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }}</a></td>
-                <td>{{ course.description }}</td>
-            </tr>
+        <div class="col-sm-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ course.name }}</h5>
+                    <p class="card-text">{{ course.description }}</p>
+                    <a href="{{ path('app_course_show', {'id': course.id}) }}" class="btn btn-primary">Перейти к курсу</a>
+                </div>
+            </div>
+        </div>
         {% else %}
-            <tr>
-                <td colspan="2">Курсы не найдены</td>
-            </tr>
+            <div class="alert alert-info" role="alert">
+                <div>
+                    Курсы не найдены.
+                </div>
+            </div>
         {% endfor %}
-        </tbody>
-    </table>
+    </div>
 
+    <hr class="hr" />
     {{ include('course/_add_button.html.twig') }}
 {% endblock %}

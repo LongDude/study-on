@@ -1,34 +1,4 @@
 $body-bg: rgb(#3bccc2, 20%);
-
-body {
-    background-color: darkseagreen;
-}
-
-.button-group {
-    display: flex;
-    flex-direction: row;
-    justify-content: start;
-    gap: 3px;
-}
-
-form label {
-    display: block;
-}
-
-form {
-    display: flex;
-    box-sizing: content-box;
-    width: min-content;
-    flex-direction: column;
-    justify-content: flex-start;
-    justify-items: start;
-}
-form button {
-    display: flex;
-    justify-self: center;
-    align-self: center;
-    flex-direction: row;
-    width: min-content;
-}
+$body-tertiary-bg: rgb(#6cb2d5, 20%);
 
 @import "~bootstrap/scss/bootstrap";

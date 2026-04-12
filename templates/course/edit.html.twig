@@ -2,22 +2,22 @@
 
 {% block title %}Редактирование курса / StudyOn{% endblock %}
 
-{% block body %}
-    <nav>
-        <span>StudyOn</span>
-        /
-        <a href="{{ path('app_course_index') }}">Список курсов</a>
-        /
-        <a href="{{ path('app_course_show', {'id': course.id }) }}">{{  course.name }}</a>
-    </nav>
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_course_show', {'id': course.id }) }}">{{  course.name }}</a></li>
+    <li class="breadcrumb-item active">Редактировать курс</li>
+{% endblock %}
 
+{% block body %}
     <h1>{{ course.name }}: Редактировать курс</h1>
 
     {{ form_start(form) }}
         {{ form_row(form.name) }}
         {{ form_row(form.description) }}
-        {% do form.symbolic_name.setRendered() %}
+        {{ form_row(form.symbolic_name) }}
+        <button class="btn btn-outline-success">Сохранить</button>
     {{ form_end(form) }}
+
+    <hr class="hr"/>
 
     {{ include('course/_delete_form.html.twig') }}
 {% endblock %}

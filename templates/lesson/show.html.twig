@@ -2,21 +2,23 @@
 
 {% block title %}{{ lesson.name }}/{{ lesson.course.name }}/StudyOn{% endblock %}
 
-{% block body %}
-    <nav>
-        <span>StudyOn</span>
-        /
-        <a href="{{ path('app_course_index') }}">Список курсов</a>
-        /
+{% block breadcrumbs %}
+    <li class="breadcrumb-item">
         <a href="{{ path('app_course_show', {'id': lesson.course.id }) }}">{{ lesson.course.name }}</a>
-        /
-        <span>{{ lesson.name }}</span>
-    </nav>
+    </li>
+    <li class="breadcrumb-item active">
+        {{ lesson.name }}
+    </li>
+{% endblock %}
 
+{% block body %}
     <h1>{{ lesson.index }}. {{ lesson.name }}</h1>
     <p>{{ lesson.content }}</p>
 
-    {{ include('lesson/_edit_button.html.twig') }}
+    <div class="container-fluid p-0">
+        {{ include('lesson/_edit_button.html.twig') }}
+        {{ include('lesson/_delete_form.html.twig') }}
 
-    {{ include('lesson/_delete_form.html.twig') }}
+    </div>
+
 {% endblock %}

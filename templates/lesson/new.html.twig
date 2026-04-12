@@ -2,31 +2,24 @@
 
 {% block title %}Новый урок/StudyOn{% endblock %}
 
-{% block body %}
-    <nav aria-label="breadcrumb">
-        <span>StudyOn</span>
-        /
-        <a href="{{ path('app_course_index') }}">Список курсов</a>
-        /
-        <a href="{{ path('app_course_show', {'id': lesson.course.id}) }}">{{ lesson.course.name }}</a>
-        /
-        <span>Создать новый урок</span>
-    </nav>
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_course_show', {'id': lesson.course.id}) }}">{{ lesson.course.name }}</a></li>
+    <li class="breadcrumb-item active">Добавление урока</li>
 
+{% endblock %}
+
+{% block body %}
     <h1>Создать новый урок</h1>
 
     {{ form_start(form) }}
         {{ form_row(form.name) }}
         {{ form_row(form.content) }}
+        {{ form_row(form.Course) }}
         {% if lesson.course != null %}
-            {%- set type = 'hidden' -%}
-            {{ form_row(form.Course) }}
             <label>Курс: {{ lesson.course.name }}</label>
-        {% else %}
-            {{ form_row(form.Course) }}
         {% endif %}
         {{ form_row(form.index) }}
-    <button type="submit">Создать</button>
+    <button type="submit" class="btn btn-outline-success">Создать</button>
     {{ form_end(form) }}
 
 {% endblock %}

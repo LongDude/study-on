@@ -19,10 +19,12 @@ class CourseType extends AbstractType
         $builder
 
             ->add('name', TextType::class, [
-                'label' => 'Название курса'
+                'label' => 'Название курса',
+                'required' => true,
             ])
             ->add('description', TextareaType::class, [
-                'label' => 'Описание'
+                'label' => 'Описание',
+                'required' => true,
             ])
         ;
 
@@ -36,7 +38,8 @@ class CourseType extends AbstractType
             );
         } else {
             $builder->add('symbolic_name', TextType::class, [
-                'label' => 'Символьное имя'
+                'label' => 'Символьное имя',
+                'required' => true,
             ]);
         }
     }

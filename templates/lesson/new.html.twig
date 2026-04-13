@@ -3,7 +3,9 @@
 {% block title %}Новый урок/StudyOn{% endblock %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a href="{{ path('app_course_show', {'id': lesson.course.id}) }}">{{ lesson.course.name }}</a></li>
+    {% if lesson.course != null %}
+        <li class="breadcrumb-item"><a href="{{ path('app_course_show', {'id': lesson.course.id}) }}">{{ lesson.course.name }}</a></li>
+    {% endif %}
     <li class="breadcrumb-item active">Добавление урока</li>
 
 {% endblock %}

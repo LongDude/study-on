@@ -20,9 +20,13 @@ class Lesson
     private ?Course $Course = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Assert\NotNull]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank]
+    #[Assert\NotNull]
     private ?string $content = null;
 
     #[ORM\Column]

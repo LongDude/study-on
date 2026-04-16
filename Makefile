@@ -17,7 +17,7 @@ up:
 	@${COMPOSE} ${ENV_FILES} up -d
 
 down:
-	@${COMPOSE} down
+	@${COMPOSE} --profile all down
 
 clear:
 	@${CONSOLE} cache:clear
@@ -36,6 +36,15 @@ encore_dev:
 
 encore_prod:
 	@${COMPOSE} run node yarn encore production
+
+up-prod:
+	@APP_ENV="prod" ${COMPOSE} ${ENV_FILES} up -d
+
+up-dev:
+	@APP_ENV="dev" ${COMPOSE} ${ENV_FILES} --profile dev up -d
+
+up-test:
+	@APP_ENV="test" ${COMPOSE} ${ENV_FILES} --profile "test" up -d
 
 phpunit:
 	@${PHP} bin/phpunit

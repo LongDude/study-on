@@ -38,11 +38,31 @@ services:
       - ${HOME}/.composer:/.composer
     environment:
       - COMPOSER_ALLOW_SUPERUSER=1
+      - APP_ENV=${APP_ENV}
     env_file:
       - .env
       - .env.local
     links:
       - postgres
+
+  pgadmin:
+      image: dpage/pgadmin4:7.2
+      env_file:
+          - .env
+          - .env.local
+      environment:
+          PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@mail.com}
+          PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-5678pgadmin}
+          PGADMIN_LISTEN_PORT: 80
+      volumes:
+          - pgadmin:/var/lib/pgadmin
+      links:
+          - postgres
+      depends_on:
+          - postgres
+      ports:
+          - "8081:80"
+      profiles: [all, dev, test]
 
   node:
     image: node:alpine
@@ -53,5 +73,7 @@ services:
     volumes:
         - ${PWD}:/app
         - ${HOME}/.yarn:/yarn
+
 volumes:
     postgres_data:
+    pgadmin:

@@ -5,16 +5,27 @@ CONSOLE=$(PHP) bin/console
 COMPOSER=$(PHP) composer
 
 help:
-	@echo "up			запуск контейнеров"
+	@echo "up-prod		запуск контейнеров (production-ready)"
+	@echo "up-dev		запуск контейнеров (development)"
+	@echo "up-test		запуск контейнеров (test)"
 	@echo "down			остановка контейнеров"
 	@echo "clear		очистка кэша"
 	@echo "migration	создание миграций"
 	@echo "migrate		применение миграций"
 	@echo "fixtload		загрузка фикстур"
+	@echo "encore_dev	сборка фронта фикстур"
+	@echo "encore_prod	загрузка фикстур"
+	@echo "phpunit		загрузка фикстур"
 
 
-up:
-	@${COMPOSE} ${ENV_FILES} up -d
+up-prod:
+	@APP_ENV="prod" ${COMPOSE} ${ENV_FILES} up -d
+
+up-dev:
+	@APP_ENV="dev" ${COMPOSE} ${ENV_FILES} --profile dev up -d
+
+up-test:
+	@APP_ENV="test" ${COMPOSE} ${ENV_FILES} --profile "test" up -d
 
 down:
 	@${COMPOSE} --profile all down
@@ -36,15 +47,6 @@ encore_dev:
 
 encore_prod:
 	@${COMPOSE} run node yarn encore production
-
-up-prod:
-	@APP_ENV="prod" ${COMPOSE} ${ENV_FILES} up -d
-
-up-dev:
-	@APP_ENV="dev" ${COMPOSE} ${ENV_FILES} --profile dev up -d
-
-up-test:
-	@APP_ENV="test" ${COMPOSE} ${ENV_FILES} --profile "test" up -d
 
 phpunit:
 	@${PHP} bin/phpunit

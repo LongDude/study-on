@@ -57,3 +57,8 @@ services:
 
 volumes:
     postgres_data:
+
+networks:
+    default:
+        external:
+            name: study-onbilling_default

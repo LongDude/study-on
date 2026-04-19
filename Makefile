@@ -48,7 +48,14 @@ encore_dev:
 encore_prod:
 	@${COMPOSE} run node yarn encore production
 
-phpunit:
+run_tests:
+	@${CONSOLE} doctrine:database:drop --env=test --if-exists --force
+	@${CONSOLE} doctrine:database:create --env=test
+	@${CONSOLE} doctrine:migration:migrate --env=test --no-interaction
+	@${CONSOLE} doctrine:fixtures:load --env=test --no-interaction
 	@${PHP} bin/phpunit
+
+phpunit:
+	@${PHP} sh -c 'APP_ENV=test bin/phpunit'
 
 -include local.mk

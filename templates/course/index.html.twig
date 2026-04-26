@@ -29,5 +29,7 @@
     </div>
 
     <hr class="hr" />
-    {{ include('course/_add_button.html.twig') }}
+    {% if is_granted("ROLE_SUPER_ADMIN") %}
+        {{ include('course/_add_button.html.twig') }}
+    {% endif %}
 {% endblock %}

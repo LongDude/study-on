@@ -47,7 +47,6 @@ class SecurityController extends AbstractController
             return $this->render('security/profile.html.twig', [
                 'email' => $freshProfile->getEmail(),
                 'balance' => $freshProfile->getBalance(),
-                'role' => $this->isGranted('USER_ADMIN') ? 'Администратор' : 'Пользователь'
             ]);
         } catch (BillingException $e) {
             if ($e->getCode() >= 400) {

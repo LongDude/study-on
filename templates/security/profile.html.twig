@@ -19,7 +19,7 @@
                                 <strong>Имя:</strong> {{ email }}
                             </li>
                             <li class="list-group-item">
-                                <strong>Роль:</strong> {{ role }}
+                                <strong>Роль:</strong> {{ is_granted("ROLE_ADMIN") ? "Администратор" : "Пользователь" }}
                             </li>
                             <li class="list-group-item">
                                 <strong>Баланс:</strong> {{ balance }}

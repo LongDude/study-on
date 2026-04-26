@@ -83,8 +83,8 @@ class SecurityController extends AbstractController
             $email = $data['email'];
             $password = $data['password'];
 
-            $userToken = $billingClient->register($email, $password);
             try {
+                $userToken = $billingClient->register($email, $password);
 
                 $user = new User();
                 $user->setEmail($email);

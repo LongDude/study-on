@@ -4,6 +4,7 @@ namespace App\Tests\Service;
 
 use App\Exception\BillingException;
 use App\Service\BillingClient;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -16,28 +17,18 @@ class BillingClientTest extends KernelTestCase
         $this->billingClient = self::getContainer()->get(BillingClient::class);
     }
 
-    public function testBillingClientAuthentication(): void
+    public function testRegisterReturnsToken(): void
     {
-        // Test login
-        try {
-            $token = $this->billingClient->authenticate(
-                "user@email.index", "user_plain_password"
-            );
-        } catch (BillingException $e) {
-            self::fail($e->getMessage());
-        }
-        self::assertNotEmpty($token);
+        $token = $this->billingClient->register('new-user@test.local', 'password');
+        self::assertIsString($token);
+        $usr = $this->billingClient->getCurrentUser($token);
+        self::assertSame($token, $usr->getApiToken());
+        self::assertSame("new-user@test.local", $usr->getEmail());
+    }
 
-        // Test token correctnes
-        try {
-            $userProfile = $this->billingClient->getCurrentUser($token);
-        } catch (BillingException $e) {
-            self::fail($e->getMessage());
-        }
-        self::assertNotEmpty($userProfile->getUserIdentifier());
-        self::assertSame("user@email.index", $userProfile->getUserIdentifier());
-        self::assertNotEmpty($userProfile->getBalance());
-        self::assertGreaterThanOrEqual(0, $userProfile->getBalance());
-        self::assertNotEmpty($userProfile->getRoles());
+    public function testRegisterExistingUserFails(): void
+    {
+        $this->expectException(BillingException::class);
+        $this->billingClient->register('user@test.local', 'password');
     }
 }

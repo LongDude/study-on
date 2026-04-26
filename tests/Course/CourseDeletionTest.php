@@ -3,10 +3,12 @@
 namespace App\Tests\Course;
 
 use App\Entity\Course;
+use App\Security\User;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Security\Core\User\InMemoryUser;
 
 class CourseDeletionTest extends WebTestCase
 {
@@ -17,6 +19,12 @@ class CourseDeletionTest extends WebTestCase
     {
         parent::setUp();
         $this->client = static::createClient();
+        $testuser = new User()
+            ->setApiToken("mock-admin-token")
+            ->setEmail('admin@test.local')
+            ->setRoles(['ROLE_SUPER_ADMIN']);
+        $this->client->loginUser($testuser, 'main');
+
         $this->entityManager = static::$kernel->getContainer()->get('doctrine.orm.entity_manager');
     }
 
@@ -33,19 +41,23 @@ class CourseDeletionTest extends WebTestCase
         $course->setName("Тестовый курс");
         $course->setDescription("Курс для тестирования удаления");
         $course->setSymbolicName("test-course");
+
         try {
             $this->entityManager->persist($course);
             $this->entityManager->flush();
         } catch (ORMException $e) {
             $this->fail($e->getMessage());
         }
+        $courseId = $course->getId();
+        $crawler = $this->client->request("GET", "/courses/$courseId");
 
-        $crawler = $this->client->request('GET', "/courses/{$course->getId()}");
+        self::assertResponseIsSuccessful();
         $form = $crawler->selectButton("Удалить курс")->form();
         $this->client->submit($form);
 
         self::assertResponseRedirects("/courses");
-        $this->client->followRedirect();
-        self::assertAnySelectorTextNotContains("div.card h5.card-title", "Тестовый курс");
+
+        $this->entityManager->clear();
+        self::assertNull($this->entityManager->find(Course::class, $courseId));
     }
 }

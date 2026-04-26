@@ -8,15 +8,11 @@ use Symfony\Bundle\SecurityBundle\Security;
 
 class BillingClient
 {
-    private string $billingUrl;
-    private int $billingTimeout;
-
     public function __construct(
-        string $billingUrl,
-        int $billingTimeout = 30
+        private string $billingUrl,
+        private readonly int $billingTimeout = 30
     ){
         $this->billingUrl = rtrim($billingUrl, '/');
-        $this->billingTimeout = $billingTimeout;
     }
 
     /**

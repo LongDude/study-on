@@ -23,6 +23,7 @@ class BillingClient
      * @param string $url
      * @param string $method
      * @param array $payload
+     * @param string $jwtToken
      * @return array
      * @throws BillingException
      */
@@ -199,5 +200,6 @@ class BillingClient
 
         // Unknown error
         $errorMessage = $decodedResponse['error'] ?? $decodedResponse['message'] ?? "HTTP Error {$httpCode}";
-        throw new BillingException($errorMessage, $httpCode);    }
+        throw new BillingException($errorMessage, $httpCode);
+    }
 }

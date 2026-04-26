@@ -4,16 +4,8 @@ namespace App\Exception;
 
 class BillingException extends \Exception
 {
-    private array $errors {
-        get {
-            return $this->errors;
-        }
-    }
-    private int $statusCode {
-        get {
-            return $this->statusCode;
-        }
-    }
+    private array $errors;
+    private int $statusCode;
 
     public function __construct(string $message, int $statusCode, array $errors = [], ?\Throwable $previous = null) {
         parent::__construct($message, $statusCode, $previous);
@@ -26,5 +18,11 @@ class BillingException extends \Exception
         $message = $message ?? 'Billing service error';
         $errors = $response['errors'] ?? [];
         return new self($message, $statusCode, $errors);
-    }
+    }public function getErrors(): array
+{
+    return $this->errors;
+}public function getStatusCode(): int
+{
+    return $this->statusCode;
+}
 }

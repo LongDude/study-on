@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}StudyOn/Регистрация{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item">Регистрация</li>
+{% endblock %}
+
+{% block body %}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label == 'error' ? 'danger' : label }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endfor %}
+    {{ form_start(form) }}
+    {{ form_widget(form) }}
+        <button class="btn btn-outline-success">{{ button_label|default('Зарегестрироваться') }}</button>
+    {{ form_end(form) }}
+
+
+{% endblock %}

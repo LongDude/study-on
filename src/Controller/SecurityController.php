@@ -3,15 +3,21 @@
 namespace App\Controller;
 
 use App\Exception\BillingException;
+use App\Form\RegistrationType;
+use App\Security\BillingAuthenticator;
+use App\Security\User;
 use App\Service\BillingClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
+use function PHPUnit\Framework\isArray;
 
 class SecurityController extends AbstractController
 {
@@ -54,5 +60,59 @@ class SecurityController extends AbstractController
             }
             return new Response('Сервис временно недоступен. Повторите попытку позже', 500);
         }
+    }
+
+    #[Route(path: '/register', name: 'app_register')]
+    public function registerUser(
+        Request $request,
+        UserAuthenticatorInterface $userAuthenticator,
+        BillingAuthenticator $billingAuthenticator,
+        BillingClient $billingClient,
+    ): Response {
+
+        if ($this->getUser()) {
+            $this->container->get('security.token_storage')->setToken(null);
+            $this->container->get('session')->invalidate();
+        }
+
+        $form = $this->createForm(RegistrationType::class);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+            $email = $data['email'];
+            $password = $data['password'];
+
+            $userToken = $billingClient->register($email, $password);
+            try {
+
+                $user = new User();
+                $user->setEmail($email);
+                $user->setApiToken($userToken);
+                $this->addFlash('success', 'Регистрация прошла успешно');
+                return $userAuthenticator->authenticateUser($user, $billingAuthenticator, $request);
+            } catch (BillingException $e) {
+                $errors = $e->getErrors();
+                if ($errors && is_array($errors)) {
+                    foreach ($errors as $field => $fieldErrors) {
+                        if (is_array($fieldErrors)) {
+                            foreach ($fieldErrors as $err) {
+                                $this->addFlash('error', sprintf("Ошибка в поле %s: %s", $field, $err));
+                            }
+                        } else {
+                            $this->addFlash('error', $fieldErrors);
+                        }
+                    }
+                } else {
+                    $this->addFlash('error', "Ошибка регистрации: " . $e->getMessage());
+                }
+
+                return $this->render('security/_register.html.twig', ['form' => $form->createView()]);
+            } catch (\Exception $e) {
+                $this->addFlash('error', "Ошибка регистрации. Попробуйте позже.");
+                return $this->render('security/_register.html.twig', ['form' => $form->createView()]);
+            }
+        }
+        return $this->render('security/_register.html.twig', ['form' => $form]);
     }
 }

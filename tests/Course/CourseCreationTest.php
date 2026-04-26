@@ -3,6 +3,7 @@
 namespace App\Tests\Course;
 
 use App\Entity\Course;
+use App\Security\User;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -18,11 +19,18 @@ class CourseCreationTest extends WebTestCase
     {
         parent::setUp();
         $this->client = static::createClient();
+        $testuser = new User()
+            ->setApiToken("mock-admin-token")
+            ->setEmail('admin@test.local')
+            ->setRoles(['ROLE_SUPER_ADMIN']);
+        $this->client->loginUser($testuser, 'main');
+
         $this->entityManager = static::$kernel->getContainer()->get('doctrine.orm.entity_manager');
     }
 
     protected function tearDown(): void
     {
+        $this->entityManager->clear();
         $this->entityManager->close();
         parent::tearDown();
     }

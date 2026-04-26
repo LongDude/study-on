@@ -30,6 +30,7 @@ class CourseDeletionTest extends WebTestCase
 
     protected function tearDown(): void
     {
+        $this->entityManager->clear();
         $this->entityManager->close();
         parent::tearDown();
     }
@@ -56,8 +57,6 @@ class CourseDeletionTest extends WebTestCase
         $this->client->submit($form);
 
         self::assertResponseRedirects("/courses");
-
-        $this->entityManager->clear();
         self::assertNull($this->entityManager->find(Course::class, $courseId));
     }
 }

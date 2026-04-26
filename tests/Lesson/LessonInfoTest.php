@@ -4,24 +4,32 @@ namespace App\Tests\Lesson;
 
 use App\Entity\Course;
 use App\Entity\Lesson;
+use App\Security\User;
 use Doctrine\ORM\EntityManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class LessonInfoTest extends WebTestCase
 {
-    private KernelBrowser $client;
-    private EntityManager $entityManager;
+    private readonly EntityManager $entityManager;
+    private readonly KernelBrowser $client;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->client = static::createClient();
+        $testuser = new User()
+            ->setApiToken("mock-admin-token")
+            ->setEmail('admin@test.local')
+            ->setRoles(['ROLE_SUPER_ADMIN']);
+        $this->client->loginUser($testuser, 'main');
+
         $this->entityManager = static::$kernel->getContainer()->get('doctrine.orm.entity_manager');
     }
 
     protected function tearDown(): void
     {
+        $this->entityManager->clear();
         $this->entityManager->close();
         parent::tearDown();
     }

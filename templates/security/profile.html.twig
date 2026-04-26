@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+{% block title %}StudyOn/Профиль{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item">Профиль</li>
+{% endblock %}
+
+{% block body %}
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Профиль пользователя</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <strong>Имя:</strong> {{ email }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Роль:</strong> {{ role }}
+                            </li>
+                            <li class="list-group-item">
+                                <strong>Баланс:</strong> {{ balance }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

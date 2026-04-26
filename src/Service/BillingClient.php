@@ -3,6 +3,8 @@
 namespace App\Service;
 
 use App\Exception\BillingException;
+use App\Security\User;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class BillingClient
 {
@@ -133,10 +135,10 @@ class BillingClient
 
     /**
      * @param string $token - jwt token
-     * @return array - User info array ['username', 'balance', 'roles']
+     * @return User
      * @throws BillingException
      */
-    public function getCurrentUser(string $token): array
+    public function getCurrentUser(string $token): User
     {
         $url = $this->billingUrl.'/api/v1/users/current';
         $billingResponse = $this->makeCURLRequest($url, 'GET', [], $token);
@@ -153,7 +155,10 @@ class BillingClient
         }
 
         if ($httpCode >= 200 && $httpCode < 300) {
-            return $data;
+            return new User()
+            ->setEmail($data['username'])
+            ->setBalance($data['balance'])
+            ->setRoles($data['roles']);
         }
 
         // Unknown error

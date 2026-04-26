@@ -34,9 +34,10 @@ class BillingClientTest extends KernelTestCase
         } catch (BillingException $e) {
             self::fail($e->getMessage());
         }
-        self::assertNotEmpty($userProfile);
-        self::assertArrayHasKey("username", $userProfile);
-        self::assertNotEmpty($userProfile["username"]);
-        self::assertSame("user@email.index", $userProfile["username"]);
+        self::assertNotEmpty($userProfile->getUserIdentifier());
+        self::assertSame("user@email.index", $userProfile->getUserIdentifier());
+        self::assertNotEmpty($userProfile->getBalance());
+        self::assertGreaterThanOrEqual(0, $userProfile->getBalance());
+        self::assertNotEmpty($userProfile->getRoles());
     }
 }

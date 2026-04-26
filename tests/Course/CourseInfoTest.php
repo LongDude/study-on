@@ -19,16 +19,41 @@ class CourseInfoTest extends WebTestCase
     {
         parent::setUp();
         $this->client = static::createClient();
-        $testuser = new User()
-            ->setApiToken("mock-admin-token")
-            ->setEmail('admin@test.local')
-            ->setRoles(['ROLE_SUPER_ADMIN']);
-        $this->client->loginUser($testuser, 'main');
+
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
+    }
+
+    /**
+     * Login client as selected user type
+     * @param $role string either 'User' or 'Admin'
+     * @return void
+     */
+    private function authorizeRole($role): void {
+        if ($role === 'User') {
+            $this->client->loginUser(
+                new User()
+                ->setApiToken("mock-user-token")
+                ->setEmail('user@test.local')
+                ->setRoles(['ROLE_USER']),
+                'main'
+            );
+        }
+        else if ($role === 'Admin') {
+            $this->client->loginUser(
+                new User()
+                    ->setApiToken("mock-admin-token")
+                    ->setEmail('admin@test.local')
+                    ->setRoles(['ROLE_SUPER_ADMIN']),
+                'main'
+            );
+        }
+        else {
+            throw new \ValueError("Expected 'User' or 'Admin', got $role");
+        }
     }
 
     public function testHomePageRedirect(): void
@@ -42,9 +67,10 @@ class CourseInfoTest extends WebTestCase
         self::assertPageTitleContains("Основы веб-разработки");
     }
 
-    public function testUserContent(): void
+    public function testAdminContent(): void
     {
         # Application test
+        $this->authorizeRole("Admin");
         # Главная страница
         $crawler = $this->client->request('GET', '/courses');
         self::assertResponseIsSuccessful();
@@ -83,5 +109,56 @@ class CourseInfoTest extends WebTestCase
         self::assertNotNull($buttonGroup->selectLink("Добавить урок"));
         self::assertNotNull($buttonGroup->selectLink("Редактировать курс"));
         self::assertNotNull($buttonGroup->selectButton("Удалить курс"));
+    }
+
+    public function testUserContent(): void {
+        $this->authorizeRole("User");
+
+        $crawler = $this->client->request('GET', '/courses');
+        self::assertResponseIsSuccessful();
+
+        # Search and follow specific course
+        $tgtCourseLink = $crawler
+            ->filter("div.card")
+            ->reduce(function (Crawler $node) {
+                return $node->filter("h5.card-title")->text() === "Основы веб-разработки";
+            })->selectLink("Перейти к курсу")->link();
+        $crawler = $this->client->click($tgtCourseLink);
+
+        self::assertResponseIsSuccessful();
+        # Lessons
+        $lessons = $crawler->filter("section div div");
+        self::assertCount(4, $lessons);
+        $lesson = $lessons->first();
+        self::assertSame("1. Введение в веб-технологии", $lesson->filter('h4')->text());
+        self::assertSame("Как работает интернет, клиент-серверная архитектура, роль браузера. Обзор инструментов разработчика.", $lesson->filter("p")->text());
+
+        # Buttons
+        self::assertSelectorNotExists('main > div.container-fluid');
+    }
+
+    public function testAnonymousContent(): void
+    {
+        $crawler = $this->client->request('GET', '/courses');
+        self::assertResponseIsSuccessful();
+
+        # Search and follow specific course
+        $tgtCourseLink = $crawler
+            ->filter("div.card")
+            ->reduce(function (Crawler $node) {
+                return $node->filter("h5.card-title")->text() === "Основы веб-разработки";
+            })->selectLink("Перейти к курсу")->link();
+        $crawler = $this->client->click($tgtCourseLink);
+
+        self::assertResponseIsSuccessful();
+        # Lessons
+        $lessons = $crawler->filter("section div div");
+        self::assertCount(4, $lessons);
+        $lesson = $lessons->first();
+        self::assertSame("1. Введение в веб-технологии", $lesson->filter('h4')->text());
+        self::assertSelectorNotExists("section div div p");
+
+        # Buttons
+        self::assertSelectorNotExists('main > div.container-fluid');
     }
 }

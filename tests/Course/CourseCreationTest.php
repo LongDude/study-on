@@ -19,13 +19,36 @@ class CourseCreationTest extends WebTestCase
     {
         parent::setUp();
         $this->client = static::createClient();
-        $testuser = new User()
-            ->setApiToken("mock-admin-token")
-            ->setEmail('admin@test.local')
-            ->setRoles(['ROLE_SUPER_ADMIN']);
-        $this->client->loginUser($testuser, 'main');
-
         $this->entityManager = static::$kernel->getContainer()->get('doctrine.orm.entity_manager');
+    }
+
+    /**
+     * Login client as selected user type
+     * @param $role string either 'User' or 'Admin'
+     * @return void
+     */
+    private function authorizeRole($role): void {
+        if ($role === 'User') {
+            $this->client->loginUser(
+                new User()
+                    ->setApiToken("mock-user-token")
+                    ->setEmail('user@test.local')
+                    ->setRoles(['ROLE_USER']),
+                'main'
+            );
+        }
+        else if ($role === 'Admin') {
+            $this->client->loginUser(
+                new User()
+                    ->setApiToken("mock-admin-token")
+                    ->setEmail('admin@test.local')
+                    ->setRoles(['ROLE_SUPER_ADMIN']),
+                'main'
+            );
+        }
+        else {
+            throw new \ValueError("Expected 'User' or 'Admin', got $role");
+        }
     }
 
     protected function tearDown(): void
@@ -35,8 +58,9 @@ class CourseCreationTest extends WebTestCase
         parent::tearDown();
     }
 
-    public function testCreateNewCourse(): void
+    public function testAdminCreateNewCourse(): void
     {
+        $this->authorizeRole("Admin");
         $crawler = $this->client->request('GET', '/courses/new');
         self::assertResponseIsSuccessful();
 
@@ -56,6 +80,8 @@ class CourseCreationTest extends WebTestCase
 
     public function testCreateCourseWithDuplicateSymnames(): void
     {
+        $this->authorizeRole("Admin");
+
         // Создаем первый курс и занимаем символьное имя
         $course = new Course();
         $course->setName("Тестовый курс");
@@ -86,6 +112,8 @@ class CourseCreationTest extends WebTestCase
 
     public function testRequiresFields(): void
     {
+        $this->authorizeRole("Admin");
+
         // Страница добавления курса
         $crawler = $this->client->request('GET', '/courses/new');
         self::assertResponseIsSuccessful();
@@ -106,6 +134,8 @@ class CourseCreationTest extends WebTestCase
 
     public function testFieldLimits(): void
     {
+        $this->authorizeRole("Admin");
+
         // Страница добавления курса
         $crawler = $this->client->request('GET', '/courses/new');
         self::assertResponseIsSuccessful();
@@ -122,5 +152,18 @@ class CourseCreationTest extends WebTestCase
         self::assertSelectorExists("#course_name_error1");
         self::assertSelectorExists("#course_description_error1");
         self::assertSelectorExists("#course_symbolic_name_error1");
+    }
+
+    public function testUserCreateBlocked(): void
+    {
+        $this->authorizeRole("User");
+        $this->client->request('GET', '/courses/new');
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testAnonymousCreateBlocked(): void
+    {
+        $this->client->request('GET', '/courses/new');
+        self::assertResponseRedirects('/login');
     }
 }

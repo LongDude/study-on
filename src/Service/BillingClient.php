@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Exception\BillingException;
 use App\Security\User;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\DependencyInjection\Exception\EmptyParameterValueException;
 
 class BillingClient
 {
@@ -23,7 +24,7 @@ class BillingClient
      * @return array
      * @throws BillingException
      */
-    private function makeCURLRequest(
+    private function _makeCURLRequest(
         string $url,
         string $method = 'GET',
         array $payload = [],
@@ -103,7 +104,7 @@ class BillingClient
     public function authenticate(string $email, string $password): string
     {
         $url = $this->billingUrl.'/api/v1/auth';
-        $billingResponse = $this->makeCURLRequest(
+        $billingResponse = $this->_makeCURLRequest(
             $url,
             'POST',
             ['username' => $email, 'password' => $password]
@@ -138,7 +139,7 @@ class BillingClient
     public function getCurrentUser(string $token): User
     {
         $url = $this->billingUrl.'/api/v1/users/current';
-        $billingResponse = $this->makeCURLRequest($url, 'GET', [], $token);
+        $billingResponse = $this->_makeCURLRequest($url, 'GET', [], $token);
         $data = $billingResponse['data'];
         $httpCode = $billingResponse['status'];
 
@@ -172,7 +173,7 @@ class BillingClient
     public function register(string $email, string $password): string
     {
         $url = $this->billingUrl.'/api/v1/register';
-        $billingResponse = $this->makeCURLRequest($url, 'POST', [
+        $billingResponse = $this->_makeCURLRequest($url, 'POST', [
             'email' => $email,
             'password' => $password
         ]);
@@ -195,6 +196,42 @@ class BillingClient
         }
 
         // Unknown error
+        $errorMessage = $decodedResponse['error'] ?? $decodedResponse['message'] ?? "HTTP Error {$httpCode}";
+        throw new BillingException($errorMessage, $httpCode);
+    }
+
+    /**
+     * Получает новый API токен по данному refresh токену
+     * @param string $refreshToken
+     * @return string
+     * @throws BillingException
+     */
+    public function refreshToken(string $refreshToken): string
+    {
+        $url = $this->billingUrl.'/api/v1/token/refresh';
+        if (empty($refreshToken)) {
+            throw new EmptyParameterValueException('Refresh token cannot be empty.');
+        }
+
+        $billingResponse = $this->_makeCURLRequest($url, 'POST', ["refresh_token" => $refreshToken]);
+        $data = $billingResponse['data'];
+        $httpCode = $billingResponse['status'];
+
+        if ($httpCode === 401) {
+            throw new BillingException('Unauthorized.', 401);
+        }
+
+        if ($httpCode === 400) {
+            throw new BillingException('Bad request: ' . json_encode($data), 400, $data['errors']);
+        }
+        if (!isset($data['refresh_token'])) {
+            throw new BillingException("Invalid response: token not found: " . json_encode($data), 500);
+        }
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return $data['token'];
+        }
+
         $errorMessage = $decodedResponse['error'] ?? $decodedResponse['message'] ?? "HTTP Error {$httpCode}";
         throw new BillingException($errorMessage, $httpCode);
     }

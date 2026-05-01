@@ -101,7 +101,7 @@ class BillingClient
      * @return string $token - JWT token
      * @throws BillingException
      */
-    public function authenticate(string $email, string $password): string
+    public function authenticate(string $email, string $password): array
     {
         $url = $this->billingUrl.'/api/v1/auth';
         $billingResponse = $this->_makeCURLRequest(
@@ -117,13 +117,13 @@ class BillingClient
             throw new BillingException('Invalid credentials.', 401);
         }
         // No token provided
-        if (!isset($data['token'])) {
+        if (!isset($data['token'], $data['refresh_token'])) {
             $resp = json_encode($data);
-            throw new BillingException("Invalid response: token not found: {$resp}", 500);
+            throw new BillingException("Invalid response: tokens not found: {$resp}", 400);
         }
 
         if ($httpCode >= 200 && $httpCode < 300) {
-            return $data['token'];
+            return $data;
         }
 
         // Unknown error

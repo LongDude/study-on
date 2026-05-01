@@ -7,6 +7,13 @@ use Symfony\Component\Routing\Exception\InvalidParameterException;
 
 class TokenDecoderService
 {
+
+    /**
+     * Декодирует полученный API Token
+     * По умолчанию JWT токен содержит поля `iat`, `exp`, `roles`, `username`
+     * @param string $apiToken
+     * @return array
+     */
     public function decodeApiToken(string $apiToken): array
     {
         return $this->decode($apiToken);
@@ -23,6 +30,12 @@ class TokenDecoderService
         return (int) $payload['exp'];
     }
 
+    /**
+     * Декодирует полученный API Token
+     * По умолчанию JWT токен содержит поля `iat`, `exp`, `roles`, `username`
+     * @param string $apiToken
+     * @return array
+     */
     private function decode(string $apiToken): array
     {
         if ($apiToken === '') {

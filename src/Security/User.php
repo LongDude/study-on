@@ -15,8 +15,10 @@ class User implements UserInterface
     private $roles = [];
 
     private ?string $apiToken = null;
+    private ?string $refreshToken = null;
 
     private ?float $balance = null;
+
 
     public function getEmail(): ?string
     {
@@ -37,7 +39,7 @@ class User implements UserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->apiToken;
+        return (string) $this->email;
     }
 
     /**
@@ -84,19 +86,29 @@ class User implements UserInterface
         return $this->balance;
     }
 
-    public function __serialize(): array {
-        // Профиль пользователя фактически хранится по токену
-        // После refreshUser восстанавливаем свежие данные по токену
-        // userIdentifier нужен для корректной обработки пользователя Symfony
+    public function __serialize(): array
+    {
         return [
             'email' => $this->getEmail(),
             'apiToken' => $this->apiToken,
+            'refreshToken' => $this->refreshToken,
         ];
     }
 
-    public function __unserialize(array $data): void {
-        // Получаем два поля - идентификатор для сравнения с новой записью в Security и токен для обновления данных
+    public function __unserialize(array $data): void
+    {
         $this->setEmail($data['email']);
         $this->setApiToken($data['apiToken']);
+        $this->setRefreshToken($data['refreshToken']);
+    }
+
+    public function getRefreshToken(): ?string
+    {
+        return $this->refreshToken;
+    }
+
+    public function setRefreshToken(?string $refreshToken): void
+    {
+        $this->refreshToken = $refreshToken;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\Course;
 use App\Exception\BillingException;
 use App\Security\User;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -12,7 +13,7 @@ class BillingClient
     public function __construct(
         private string $billingUrl,
         private readonly int $billingTimeout = 30
-    ){
+    ) {
         $this->billingUrl = rtrim($billingUrl, '/');
     }
 
@@ -24,13 +25,12 @@ class BillingClient
      * @return array
      * @throws BillingException
      */
-    private function _makeCURLRequest(
+    private function makeCURLRequest(
         string $url,
         string $method = 'GET',
         array $payload = [],
         string $jwtToken = ""
-    ): array
-    {
+    ): array {
         // Open cUrl channel
         $ch = curl_init();
         $headers = [
@@ -61,6 +61,11 @@ class BillingClient
                 }
                 break;
             case 'GET':
+                if (!empty($payload)) {
+                    $queryString = http_build_query($payload, '', '&');
+                    $sep = (!str_contains($url, '?')) ? '?' : '&';
+                    curl_setopt($ch, CURLOPT_URL, $url . $sep . $queryString);
+                }
                 break;
             default:
                 throw new BillingException("Unsupported HTTP method: {$method}", 500);
@@ -104,7 +109,7 @@ class BillingClient
     public function authenticate(string $email, string $password): array
     {
         $url = $this->billingUrl.'/api/v1/auth';
-        $billingResponse = $this->_makeCURLRequest(
+        $billingResponse = $this->makeCURLRequest(
             $url,
             'POST',
             ['username' => $email, 'password' => $password]
@@ -139,7 +144,7 @@ class BillingClient
     public function getCurrentUser(string $token): User
     {
         $url = $this->billingUrl.'/api/v1/users/current';
-        $billingResponse = $this->_makeCURLRequest($url, 'GET', [], $token);
+        $billingResponse = $this->makeCURLRequest($url, 'GET', [], $token);
         $data = $billingResponse['data'];
         $httpCode = $billingResponse['status'];
 
@@ -173,7 +178,7 @@ class BillingClient
     public function register(string $email, string $password): string
     {
         $url = $this->billingUrl.'/api/v1/register';
-        $billingResponse = $this->_makeCURLRequest($url, 'POST', [
+        $billingResponse = $this->makeCURLRequest($url, 'POST', [
             'email' => $email,
             'password' => $password
         ]);
@@ -213,7 +218,7 @@ class BillingClient
             throw new EmptyParameterValueException('Refresh token cannot be empty.');
         }
 
-        $billingResponse = $this->_makeCURLRequest($url, 'POST', ["refresh_token" => $refreshToken]);
+        $billingResponse = $this->makeCURLRequest($url, 'POST', ["refresh_token" => $refreshToken]);
         $data = $billingResponse['data'];
         $httpCode = $billingResponse['status'];
 
@@ -233,6 +238,107 @@ class BillingClient
         }
 
         $errorMessage = $decodedResponse['error'] ?? $decodedResponse['message'] ?? "HTTP Error {$httpCode}";
+        throw new BillingException($errorMessage, $httpCode);
+    }
+
+    public function getCourseList(): array
+    {
+        $url = $this->billingUrl.'/api/v1/courses';
+        $billingResponse = $this->makeCURLRequest($url, 'GET');
+        $data = $billingResponse['data'];
+        $httpCode = $billingResponse['status'];
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return $data;
+        }
+
+        $errorMessage = $decodedResponse['error'] ?? "HTTP Error {$httpCode}";
+        throw new BillingException($errorMessage, $httpCode);
+    }
+
+    public function getCourseInfo(string $course_code): array
+    {
+        $url = $this->billingUrl.'/api/v1/courses/'.$course_code;
+        $billingResponse = $this->makeCURLRequest($url, 'GET');
+        $data = $billingResponse['data'];
+        $httpCode = $billingResponse['status'];
+        if ($httpCode === 404) {
+            throw new BillingException('Course not found.', 404);
+        }
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return $data;
+        }
+
+        $errorMessage = $decodedResponse['error'] ?? "HTTP Error {$httpCode}";
+        throw new BillingException($errorMessage, $httpCode);
+    }
+
+    public function payCourse(User $user, Course $course): array
+    {
+        $url = $this->billingUrl.'/api/v1/courses/'.$course->getSymbolicName().'/pay';
+        $billingResponse = $this->makeCURLRequest(
+            $url,
+            'POST',
+            jwtToken: $user->getApiToken()
+        );
+        $data = $billingResponse['data'];
+        $httpCode = $billingResponse['status'];
+
+        if ($httpCode === 406) {
+            throw new BillingException('Недостаточно средств.', 406, $data['message']);
+        }
+        if ($httpCode === 401) {
+            throw new BillingException('Unauthorized.', 401, $data['errors']);
+        }
+        if ($httpCode === 400) {
+            throw new BillingException('Bad request: ' . json_encode($data), 400, $data['errors']);
+        }
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return $data;
+        }
+        $errorMessage = $decodedResponse['error'] ?? "HTTP Error {$httpCode}";
+        throw new BillingException($errorMessage, $httpCode);
+    }
+
+    public function getTransactionHistory(
+        User    $user,
+        ?string $courseType,
+        ?string $courseCode,
+        ?bool   $skipExpired
+    ): array {
+        $url = $this->billingUrl.'/api/v1/transactions';
+
+        $payload = [];
+        if (!is_null($courseType)) {
+            $payload['type'] = $courseType;
+        }
+        if (!is_null($courseCode)) {
+            $payload['course_code'] = $courseCode;
+        }
+        if (!is_null($skipExpired)) {
+            $payload['skip_expired'] = $skipExpired;
+        }
+
+        $billingResponse = $this->makeCURLRequest(
+            $url,
+            'GET',
+            $payload,
+            jwtToken: $user->getApiToken()
+        );
+        $data = $billingResponse['data'];
+        $httpCode = $billingResponse['status'];
+
+        if ($httpCode === 401) {
+            throw new BillingException('Unauthorized.', 401, $data['errors']);
+        }
+        if ($httpCode === 400) {
+            throw new BillingException('Bad request: ' . json_encode($data), 400, $data['errors']);
+        }
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return $data;
+        }
+        $errorMessage = $decodedResponse['error'] ?? "HTTP Error {$httpCode}";
         throw new BillingException($errorMessage, $httpCode);
     }
 }

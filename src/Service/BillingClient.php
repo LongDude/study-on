@@ -304,9 +304,9 @@ class BillingClient
 
     public function getTransactionHistory(
         User    $user,
-        ?string $courseType,
-        ?string $courseCode,
-        ?bool   $skipExpired
+        ?string $courseType = null,
+        ?string $courseCode = null,
+        ?bool   $skipExpired = null
     ): array {
         $url = $this->billingUrl.'/api/v1/transactions';
 

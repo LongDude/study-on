@@ -30,4 +30,47 @@
             </div>
         </div>
     </div>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Транзакции</h4>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Дата</th>
+                                    <th scope="col">Тип операции</th>
+                                    <th scope="col">Курс</th>
+                                    <th scope="col">Сумма</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if transactions|length > 0 %}
+                                    {% for transaction in transactions %}
+                                        <tr>
+                                           <td>{{ transaction.created_at }}</td>
+                                           <td>{{ transaction.type }}</td>
+                                            {% if transaction.course_name is defined %}
+                                                <td><a href="{{ path('app_course_show', {'id': transaction.course_id}) }}">{{ transaction.course_name }}</a></td>
+                                            {% else %}
+                                                <td>{{ transaction.course_code|default('') }}</td>
+                                            {% endif %}
+                                            <td>{{ transaction.amount }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4">Записи не найдены</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

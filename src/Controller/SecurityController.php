@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Exception\BillingException;
 use App\Form\RegistrationType;
+use App\Repository\CourseRepository;
 use App\Security\BillingAuthenticator;
 use App\Security\User;
 use App\Service\BillingClient;
@@ -44,15 +45,40 @@ class SecurityController extends AbstractController
 
     #[Route(path: '/profile', name: 'app_profile')]
     #[IsGranted('ROLE_USER')]
-    public function profile(#[CurrentUser] $user, BillingClient $billingClient, UrlGeneratorInterface  $urlGenerator): Response {
+    public function profile(
+        #[CurrentUser] $user,
+        BillingClient $billingClient,
+        CourseRepository $courseRepository
+    ): Response {
 
         try {
             $freshProfile = $billingClient->getCurrentUser($user->getApiToken());
             $user->setBalance($freshProfile->getBalance());
 
+            try {
+                $transactions = $billingClient->getTransactionHistory($user);
+                $expandedTransactions = [];
+                foreach ($transactions as $transaction) {
+                    if (!isset($transaction['course_code'])) {
+                        continue;
+                    }
+                    $protocourse = $courseRepository->findOneBy(['symbolic_name' => $transaction['course_code']]);
+                    if ($protocourse) {
+                        $transaction['course_name'] = $protocourse->getName();
+                        $transaction['course_id'] = $protocourse->getId();
+                    }
+                    $transaction["created_at"] = new \DateTime($transaction['created_at'])->format('Y-m-d H:i:s');
+                    $expandedTransactions[] = $transaction;
+                }
+            } catch (BillingException $e) {
+                $expandedTransactions = [];
+                $this->addFlash($e->getMessage(), 'error');
+            }
+
             return $this->render('security/profile.html.twig', [
                 'email' => $freshProfile->getEmail(),
                 'balance' => $freshProfile->getBalance(),
+                "transactions" => $expandedTransactions,
             ]);
         } catch (BillingException $e) {
             if ($e->getCode() >= 400) {

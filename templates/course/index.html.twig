@@ -7,14 +7,31 @@
 {% endblock %}
 
 {% block body %}
-
     <div class="row mb-3">
         {% for course in courses %}
         <div class="col-sm-6 mb-3">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">{{ course.name }}</h5>
+                    <h5 class="card-title">{{ course.name }}
+                        {% if is_granted("ROLE_USER") %}
+                            {% if course.type == 'buy' and course.is_active is not defined %}
+                                <span class="badge bg-primary text-bg-dark">Покупка: {{ course.price }}</span>
+                            {% elseif (course.type == 'buy' or course.type == 'free') and course.is_active is defined %}
+                                <span class="badge bg-success text-bg-dark">Куплено!</span>
+                            {% elseif course.type == 'rent' and course.is_active is not defined %}
+                                <span class="badge bg-primary text-bg-dark">Аренда: {{ course.price }}</span>
+                            {% elseif course.type == 'rent' and course.is_active is defined %}
+                                <span class="badge bg-success text-bg-dark">Арендован до: {{ course.valid_until }}</span>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if course.type == 'free' and course.is_active is not defined %}
+                            <span class="badge bg-warning text-dark">Бесплатно!</span>
+                        {% endif %}
+                    </h5>
                     <p class="card-text">{{ course.description }}</p>
+                </div>
+                <div class="card-footer">
                     <a href="{{ path('app_course_show', {'id': course.id}) }}" class="btn btn-primary">Перейти к курсу</a>
                 </div>
             </div>

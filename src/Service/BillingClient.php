@@ -10,6 +10,7 @@ use Symfony\Component\DependencyInjection\Exception\EmptyParameterValueException
 
 class BillingClient
 {
+    // TODO: rework billing client and error handling
     public function __construct(
         private string $billingUrl,
         private readonly int $billingTimeout = 30
@@ -329,6 +330,26 @@ class BillingClient
         $data = $billingResponse['data'];
         $httpCode = $billingResponse['status'];
 
+        if ($httpCode === 401) {
+            throw new BillingException('Unauthorized.', 401, $data['errors']);
+        }
+        if ($httpCode === 400) {
+            throw new BillingException('Bad request: ' . json_encode($data), 400, $data['errors']);
+        }
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return $data;
+        }
+        $errorMessage = $decodedResponse['error'] ?? "HTTP Error {$httpCode}";
+        throw new BillingException($errorMessage, $httpCode);
+    }
+
+    public function getActiveCourses(User $user): array
+    {
+        $url = $this->billingUrl.'/api/v1/courses/active';
+        $response = $this->makeCURLRequest($url, 'GET', jwtToken: $user->getApiToken());
+
+        $data = $response['data'];
+        $httpCode = $response['status'];
         if ($httpCode === 401) {
             throw new BillingException('Unauthorized.', 401, $data['errors']);
         }

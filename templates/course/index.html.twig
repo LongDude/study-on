@@ -14,18 +14,18 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ course.name }}
                         {% if is_granted("ROLE_USER") %}
-                            {% if course.type == 'buy' and course.is_active is not defined %}
+                            {% if course.type|default('free') == 'buy' and course.is_active is not defined %}
                                 <span class="badge bg-primary text-bg-dark">Покупка: {{ course.price }}</span>
-                            {% elseif (course.type == 'buy' or course.type == 'free') and course.is_active is defined %}
+                            {% elseif (course.type|default('free') == 'buy' or course.type|default('free') == 'free') and course.is_active is defined %}
                                 <span class="badge bg-success text-bg-dark">Куплено!</span>
-                            {% elseif course.type == 'rent' and course.is_active is not defined %}
+                            {% elseif course.type|default('free') == 'rent' and course.is_active is not defined %}
                                 <span class="badge bg-primary text-bg-dark">Аренда: {{ course.price }}</span>
-                            {% elseif course.type == 'rent' and course.is_active is defined %}
+                            {% elseif course.type|default('free') == 'rent' and course.is_active is defined %}
                                 <span class="badge bg-success text-bg-dark">Арендован до: {{ course.valid_until }}</span>
                             {% endif %}
                         {% endif %}
 
-                        {% if course.type == 'free' and course.is_active is not defined %}
+                        {% if course.type|default('free') == 'free' and course.is_active is not defined %}
                             <span class="badge bg-warning text-dark">Бесплатно!</span>
                         {% endif %}
                     </h5>

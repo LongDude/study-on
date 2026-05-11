@@ -20,6 +20,7 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
 {
+    private const int EXPIRATION_THRESHOLD_SEC = 10;
 
     public function __construct(
         private readonly BillingClient $billingClient,
@@ -71,7 +72,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
 
         // Обновляем JWT токен если устарел
         $expirationDate = $this->tokenDecoderService->getTokenExpiration($user->getApiToken());
-        if (empty($expirationDate) || $expirationDate < time()) {
+        if (empty($expirationDate) || $expirationDate - $this::EXPIRATION_THRESHOLD_SEC < time()) {
             // Expired token, try to refresh
             try {
                 $newApiToken = $this->billingClient->refreshToken($user->getRefreshToken());

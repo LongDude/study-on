@@ -107,8 +107,9 @@ class User implements UserInterface
         return $this->refreshToken;
     }
 
-    public function setRefreshToken(?string $refreshToken): void
+    public function setRefreshToken(?string $refreshToken): static
     {
         $this->refreshToken = $refreshToken;
+        return $this;
     }
 }

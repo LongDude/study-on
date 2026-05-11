@@ -78,7 +78,7 @@ class CourseInfoTest extends WebTestCase
         $tgtCourseLink = $crawler
             ->filter("div.card")
             ->reduce(function (Crawler $node) {
-                return $node->filter("h5.card-title")->text() === "Основы веб-разработки";
+                return str_contains($node->filter("h5.card-title")->text(), "Основы веб-разработки");
             })->selectLink("Перейти к курсу")->link();
         $crawler = $this->client->click($tgtCourseLink);
 
@@ -120,7 +120,7 @@ class CourseInfoTest extends WebTestCase
         $tgtCourseLink = $crawler
             ->filter("div.card")
             ->reduce(function (Crawler $node) {
-                return $node->filter("h5.card-title")->text() === "Основы веб-разработки";
+                return str_contains($node->filter("h5.card-title")->text(), "Основы веб-разработки");
             })->selectLink("Перейти к курсу")->link();
         $crawler = $this->client->click($tgtCourseLink);
 
@@ -145,7 +145,7 @@ class CourseInfoTest extends WebTestCase
         $tgtCourseLink = $crawler
             ->filter("div.card")
             ->reduce(function (Crawler $node) {
-                return $node->filter("h5.card-title")->text() === "Основы веб-разработки";
+                return str_contains($node->filter("h5.card-title")->text(), "Основы веб-разработки");
             })->selectLink("Перейти к курсу")->link();
         $crawler = $this->client->click($tgtCourseLink);
 

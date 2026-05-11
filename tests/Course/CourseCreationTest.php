@@ -3,7 +3,7 @@
 namespace App\Tests\Course;
 
 use App\Entity\Course;
-use App\Security\User;
+use App\Service\BillingClient;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -14,12 +14,14 @@ class CourseCreationTest extends WebTestCase
 {
     private readonly EntityManager $entityManager;
     private readonly KernelBrowser $client;
+    private BillingClient $billingClient;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->client = static::createClient();
         $this->entityManager = static::$kernel->getContainer()->get('doctrine.orm.entity_manager');
+        $this->billingClient = static::$kernel->getContainer()->get('App\Service\BillingClient');
     }
 
     /**
@@ -29,26 +31,24 @@ class CourseCreationTest extends WebTestCase
      */
     private function authorizeRole($role): void {
         if ($role === 'User') {
-            $this->client->loginUser(
-                new User()
-                    ->setApiToken("mock-user-token")
-                    ->setEmail('user@test.local')
-                    ->setRoles(['ROLE_USER']),
-                'main'
-            );
+            $this->loginBillingUser('user@test.local', 'user_password');
         }
         else if ($role === 'Admin') {
-            $this->client->loginUser(
-                new User()
-                    ->setApiToken("mock-admin-token")
-                    ->setEmail('admin@test.local')
-                    ->setRoles(['ROLE_SUPER_ADMIN']),
-                'main'
-            );
+            $this->loginBillingUser('admin@test.local', 'admin_password');
         }
         else {
             throw new \ValueError("Expected 'User' or 'Admin', got $role");
         }
+    }
+
+    private function loginBillingUser(string $email, string $password): void
+    {
+        $tokens = $this->billingClient->authenticate($email, $password);
+        $user = $this->billingClient->getCurrentUser($tokens['token']);
+        $user->setApiToken($tokens['token']);
+        $user->setRefreshToken($tokens['refresh_token']);
+
+        $this->client->loginUser($user, 'main');
     }
 
     protected function tearDown(): void

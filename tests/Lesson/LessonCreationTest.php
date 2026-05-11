@@ -3,7 +3,7 @@
 namespace App\Tests\Lesson;
 
 use App\Entity\Course;
-use App\Security\User;
+use App\Service\BillingClient;
 use Doctrine\ORM\EntityManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -18,13 +18,19 @@ class LessonCreationTest extends WebTestCase
     {
         parent::setUp();
         $this->client = static::createClient();
-        $testuser = new User()
-            ->setApiToken("mock-admin-token")
-            ->setEmail('admin@test.local')
-            ->setRoles(['ROLE_SUPER_ADMIN']);
-        $this->client->loginUser($testuser, 'main');
+        $this->loginBillingUser('admin@test.local', 'admin_password');
 
         $this->entityManager = static::$kernel->getContainer()->get('doctrine.orm.entity_manager');
+    }
+
+    private function loginBillingUser(string $email, string $password): void
+    {
+        $tokens = static::getContainer()->get(BillingClient::class)->authenticate($email, $password);
+        $user = static::getContainer()->get(BillingClient::class)->getCurrentUser($tokens['token']);
+        $user->setApiToken($tokens['token']);
+        $user->setRefreshToken($tokens['refresh_token']);
+
+        $this->client->loginUser($user, 'main');
     }
 
     protected function tearDown(): void

@@ -4,7 +4,7 @@ namespace App\Tests\Lesson;
 
 use App\Entity\Course;
 use App\Entity\Lesson;
-use App\Security\User;
+use App\Service\BillingClient;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -19,13 +19,20 @@ class LessonDeletionTest extends WebTestCase
     {
         parent::setUp();
         $this->client = static::createClient();
-        $testuser = new User()
-            ->setApiToken("mock-admin-token")
-            ->setEmail('admin@test.local')
-            ->setRoles(['ROLE_SUPER_ADMIN']);
-        $this->client->loginUser($testuser, 'main');
+        $this->loginBillingUser('admin@test.local', 'admin_password');
 
         $this->entityManager = static::$kernel->getContainer()->get('doctrine.orm.entity_manager');
+    }
+
+    private function loginBillingUser(string $email, string $password): void
+    {
+        $billingClient = static::getContainer()->get(BillingClient::class);
+        $tokens = $billingClient->authenticate($email, $password);
+        $user = $billingClient->getCurrentUser($tokens['token']);
+        $user->setApiToken($tokens['token']);
+        $user->setRefreshToken($tokens['refresh_token']);
+
+        $this->client->loginUser($user, 'main');
     }
 
     protected function tearDown(): void

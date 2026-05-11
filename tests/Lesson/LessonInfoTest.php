@@ -4,7 +4,6 @@ namespace App\Tests\Lesson;
 
 use App\Entity\Course;
 use App\Entity\Lesson;
-use App\Security\User;
 use Doctrine\ORM\EntityManager;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -18,13 +17,24 @@ class LessonInfoTest extends WebTestCase
     {
         parent::setUp();
         $this->client = static::createClient();
-        $testuser = new User()
-            ->setApiToken("mock-admin-token")
-            ->setEmail('admin@test.local')
-            ->setRoles(['ROLE_SUPER_ADMIN']);
-        $this->client->loginUser($testuser, 'main');
+
+        $this->loginUser("admin@test.local", "admin_password");
 
         $this->entityManager = static::$kernel->getContainer()->get('doctrine.orm.entity_manager');
+    }
+
+    protected function loginUser(string $email, string $password): void
+    {
+        $crawler = $this->client->request('GET', '/login');
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->selectButton('Войти')->form();
+        $form->setValues([
+            'email' => $email,
+            'password' => $password,
+        ]);
+        $this->client->submit($form);
+        $this->client->followRedirect();
     }
 
     protected function tearDown(): void

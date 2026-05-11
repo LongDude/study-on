@@ -71,8 +71,9 @@ final class CourseController extends AbstractController
                         new \DateTime($billingCourseMap[$symbolicName]['valid_until'])
                             ->format('Y-m-d H:i:s');
                 }
-
                 $syncedCourses[] = $billingCourse;
+            } else {
+                $syncedCourses[] = $course;
             }
         }
 

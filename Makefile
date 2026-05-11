@@ -50,7 +50,7 @@ run_tests:
 	@${CONSOLE} doctrine:database:create --env=test
 	@${CONSOLE} doctrine:migration:migrate --env=test --no-interaction
 	@${CONSOLE} doctrine:fixtures:load --env=test --no-interaction
-	@${PHP} bin/phpunit
+	@${PHP} sh -c 'APP_ENV=test bin/phpunit'
 
 phpunit:
 	@${PHP} sh -c 'APP_ENV=test bin/phpunit'

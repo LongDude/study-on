@@ -9,43 +9,43 @@
 {% block body %}
     <div class="row mb-3">
         {% for course in courses %}
-        <div class="col-sm-6 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ course.name }}
-                        {% if is_granted("ROLE_USER") %}
-                            {% if course.type|default('free') == 'buy' and course.is_active is not defined %}
-                                <span class="badge bg-primary text-bg-dark">Покупка: {{ course.price }}</span>
-                            {% elseif (course.type|default('free') == 'buy' or course.type|default('free') == 'free') and course.is_active is defined %}
-                                <span class="badge bg-success text-bg-dark">Куплено!</span>
-                            {% elseif course.type|default('free') == 'rent' and course.is_active is not defined %}
-                                <span class="badge bg-primary text-bg-dark">Аренда: {{ course.price }}</span>
-                            {% elseif course.type|default('free') == 'rent' and course.is_active is defined %}
-                                <span class="badge bg-success text-bg-dark">Арендован до: {{ course.valid_until }}</span>
+            <div class="col-sm-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ course.name }}
+                            {% if course.is_active %}
+                                {% if course.type == 'rent' %}
+                                    <span
+                                        class="badge bg-success text-bg-dark">Арендован до: {{ course.valid_until }}</span>
+                                {% else %}
+                                    <span class="badge bg-success text-bg-dark">Куплено!</span>
+                                {% endif %}
+                            {% else %}
+                                {% if course.type == 'rent' %}
+                                    <span class="badge bg-primary text-bg-dark">Аренда: {{ course.price }}</span>
+                                {% elseif course.type == 'free' %}
+                                    <span class="badge bg-warning text-dark">Бесплатно!</span>
+                                {% elseif course.type == "paid" %}
+                                    <span class="badge bg-primary text-bg-dark">Покупка: {{ course.price }}</span>
+                                {% endif %}
                             {% endif %}
-                        {% endif %}
-
-                        {% if course.type|default('free') == 'free' and course.is_active is not defined %}
-                            <span class="badge bg-warning text-dark">Бесплатно!</span>
-                        {% endif %}
-                    </h5>
-                    <p class="card-text">{{ course.description }}</p>
-                </div>
-                <div class="card-footer">
-                    <a href="{{ path('app_course_show', {'id': course.id}) }}" class="btn btn-primary">Перейти к курсу</a>
+                        </h5>
+                        <p class="card-text">{{ course.description }}</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ path('app_course_show', {'id': course.id}) }}" class="btn btn-primary">Перейти к
+                            курсу</a>
+                    </div>
                 </div>
             </div>
-        </div>
         {% else %}
             <div class="alert alert-info" role="alert">
-                <div>
-                    Курсы не найдены.
-                </div>
+                <div>Курсы не найдены.</div>
             </div>
         {% endfor %}
     </div>
 
-    <hr class="hr" />
+    <hr class="hr"/>
     {% if is_granted("ROLE_SUPER_ADMIN") %}
         {{ include('course/_add_button.html.twig') }}
     {% endif %}

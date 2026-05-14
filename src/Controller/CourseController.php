@@ -22,63 +22,53 @@ final class CourseController extends AbstractController
     #[Route(name: 'app_course_index', methods: ['GET'])]
     public function index(
         #[CurrentUser] ?User $user,
-        CourseRepository $courseRepository,
-        BillingClient $billingClient
+        CourseRepository     $courseRepository,
+        BillingClient        $billingClient,
     ): Response {
-        $courses = $courseRepository->findAll();
 
         // Get courses price/license type
+        $courses = $courseRepository->findAll();
         try {
             $coursesBilling = $billingClient->getCourseList();
+            if ($user) {
+                $activeCourses = $billingClient->getActiveCourses($user);
+            }
         } catch (BillingException $e) {
-            $this->addFlash('error', $e->getMessage());
-            $coursesBilling = [];
-        }
-
-
-        $billingCourseMap = [];
-        foreach ($coursesBilling as $billingCourse) {
-            $billingCourseMap[$billingCourse['code']] = $billingCourse;
-        }
-        if ($user) {
-            // Get user paid courses
-            $activeCourses = $billingClient->getActiveCourses($user);
-            foreach ($activeCourses as $activeCourse) {
-                $billingCourseMap[$activeCourse['code']]['is_active'] = true;
-                if (isset($activeCourse['valid_until'])) {
-                    $billingCourseMap[$activeCourse['code']]['valid_until'] = $activeCourse['valid_until'];
-                }
-            }
-        }
-        $syncedCourses = [];
-        foreach ($courses as $course) {
-            $symbolicName = $course->getSymbolicName();
-            if (isset($billingCourseMap[$symbolicName])) {
-                $billingCourse = [
-                    'id' => $course->getId(),
-                    'name' => $course->getName(),
-                    'description' => $course->getDescription(),
-                    'type' => $billingCourseMap[$symbolicName]['type']
-                ];
-                if (isset($billingCourseMap[$symbolicName]['price'])) {
-                    $billingCourse['price'] = $billingCourseMap[$symbolicName]['price'];
-                }
-                if (isset($billingCourseMap[$symbolicName]['is_active'])) {
-                    $billingCourse['is_active'] = true;
-                }
-                if (isset($billingCourseMap[$symbolicName]['valid_until'])) {
-                    $billingCourse['valid_until'] =
-                        new \DateTime($billingCourseMap[$symbolicName]['valid_until'])
-                            ->format('Y-m-d H:i:s');
-                }
-                $syncedCourses[] = $billingCourse;
+            if ($e->getCode() >= 500) {
+                $this->addFlash('error', "Billing-сервис временно недоступен");
             } else {
-                $syncedCourses[] = $course;
+                throw $e;
             }
         }
 
+        $courseObjects = [];
+        foreach ($courses as $course) {
+            $courseSymbolicName = $course->getSymbolicName();
+            $courseObjects[$courseSymbolicName] = [];
+            $courseObjects[$courseSymbolicName]['id'] = $course->getId();
+            $courseObjects[$courseSymbolicName]['code'] = $courseSymbolicName;
+            $courseObjects[$courseSymbolicName]['name'] = $course->getName();
+            $courseObjects[$courseSymbolicName]['description'] = $course->getDescription();
+            // to simplify twig
+            $courseObjects[$courseSymbolicName]['is_active'] = false;
+            $courseObjects[$courseSymbolicName]['type'] = 'free';
+            $courseObjects[$courseSymbolicName]['price'] = 0;
+        }
 
-        return $this->render('course/index.html.twig', ['courses' => $syncedCourses]);
+        foreach ($coursesBilling ?? [] as $course) {
+            $courseObjects[$course['code']]['type'] = $course['type'];
+            $courseObjects[$course['code']]['price'] = $course['price'] ?? 0;
+        }
+
+        foreach ($activeCourses ?? [] as $course) {
+            $courseObjects[$course['code']]['is_active'] = true;
+            if (isset($course['valid_until'])) {
+                $courseObjects[$course['code']]['valid_until'] =
+                    new \DateTime($course['valid_until'])->format('Y-m-d H:i:s');
+            }
+        }
+
+        return $this->render('course/index.html.twig', ['courses' => $courseObjects]);
     }
 
     #[Route('/new', name: 'app_course_new', methods: ['GET', 'POST'])]
@@ -134,7 +124,7 @@ final class CourseController extends AbstractController
     #[IsGranted('ROLE_SUPER_ADMIN')]
     public function delete(Request $request, Course $course, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$course->getId(), $request->getPayload()->getString('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $course->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($course);
             $entityManager->flush();
         }

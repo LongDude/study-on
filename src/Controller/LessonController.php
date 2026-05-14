@@ -60,6 +60,14 @@ final class LessonController extends AbstractController
         BillingClient  $billingClient,
         Lesson         $lesson,
     ): Response {
+
+        if ($this->isGranted('ROLE_SUPER_ADMIN')) {
+            // override checkup for admin
+            return $this->render('lesson/show.html.twig', [
+                'lesson' => $lesson,
+            ]);
+        }
+
         // TODO сделать нормальный эндпоинт с фильтрацией
         $course = $lesson->getCourse();
         $course_paid = false;
@@ -84,9 +92,8 @@ final class LessonController extends AbstractController
             return $this->render('lesson/show.html.twig', [
                 'lesson' => $lesson,
             ]);
-        } else {
-            throw $this->createAccessDeniedException();
         }
+        throw $this->createAccessDeniedException();
     }
 
     #[Route('/{id}/edit', name: 'app_lesson_edit', methods: ['GET', 'POST'])]

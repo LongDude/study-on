@@ -8,15 +8,91 @@
 
 {% block body %}
     <main>
-        <h1>{{ course.name }}</h1>
+        {% set can_pay = balance is not null and balance >= course_info.price %}
+        {% set payment_text = course_info.type == 'rent' ? 'Арендовать' : 'Купить' %}
+
+        <h1>{{ course.name }}
+            {% if course_info.is_active %}
+                {% if course_info.type == 'rent' %}
+                    <span class="badge bg-success text-bg-dark">Арендован до: {{ course_info.valid_until }}</span>
+                {% else %}
+                    <span class="badge bg-success text-bg-dark">Куплено!</span>
+                {% endif %}
+            {% else %}
+                {% if course_info.type == 'rent' %}
+                    <span class="badge bg-primary text-bg-dark">Аренда: {{ course_info.price }}</span>
+                {% elseif course_info.type == 'free' %}
+                    <span class="badge bg-warning text-dark">Бесплатно!</span>
+                {% elseif course_info.type == 'buy' %}
+                    <span class="badge bg-primary text-bg-dark">Покупка: {{ course_info.price }}</span>
+                {% endif %}
+            {% endif %}
+        </h1>
+
         <p> {{ course.description }}</p>
+
+        {% if app.user %}
+            <button
+                type="button"
+                class="btn btn-success mb-4"
+                data-bs-toggle="modal"
+                data-bs-target="#coursePaymentModal"
+                {% if course_info.is_active %}disabled{% endif %}
+            >
+                {{ payment_text }}
+            </button>
+            <div class="modal fade" id="coursePaymentModal" tabindex="-1" aria-labelledby="coursePaymentModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form class="modal-content" method="post" action="{{ path('app_course_pay', {'id': course.id}) }}">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="coursePaymentModalLabel">{{ payment_text }} курс</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('pay_course' ~ course.id) }}">
+                            <div class="d-flex justify-content-between">
+                                <span>Текущий баланс</span>
+                                <strong>{{ balance|number_format(2, '.', ' ') }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Стоимость курса</span>
+                                <strong>{{ course_info.price|number_format(2, '.', ' ') }}</strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span>Баланс после оплаты</span>
+                                <strong>{{ (balance - course_info.price)|number_format(2, '.', ' ') }}</strong>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            {% if can_pay %}
+                                <button type="submit" class="btn btn-primary">Подтвердить</button>
+                            {% else %}
+                                <div class="btn btn-danger" disabled>Недостаточно средств</div>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        {% else %}
+            <a
+                type="button"
+                class="btn btn-success mb-4"
+                href="{{ path('app_login') }}"
+            >{{ payment_text }}</a>
+
+        {% endif %}
+
+
 
         <section>
             <h2>Доступные уроки:</h2>
             <div>
             {% for lesson in course.lessons %}
                 <div>
-                    {% if is_granted("ROLE_USER") %}
+                    {% if app.user and course_info.is_active or is_granted("ROLE_SUPER_ADMIN") %}
                         <h4>
                             {{ lesson.index }}. <a href="{{ path('app_lesson_show', {'id': lesson.id}) }}">{{ lesson.name }}</a>
                         </h4>

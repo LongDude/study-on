@@ -93,12 +93,86 @@ final class CourseController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_course_show', methods: ['GET'])]
-    public function show(Course $course): Response
+    public function show(
+        Course $course,
+        #[CurrentUser] ?User $user,
+        BillingClient $billingClient,
+    ): Response
     {
+        $courseInfo = [
+            'type' => 'free',
+            'price' => 0,
+            'is_active' => false,
+            'valid_until' => null,
+        ];
+        $balance = null;
+
+        try {
+            $billingCourse = $billingClient->getCourseInfo((string) $course->getSymbolicName());
+            $courseInfo['type'] = $billingCourse['type'];
+            $courseInfo['price'] = $billingCourse['price'] ?? 0;
+
+            if ($user) {
+                $freshUser = $billingClient->getCurrentUser((string) $user->getApiToken());
+                $balance = $freshUser->getBalance();
+                $user->setBalance($balance);
+
+                // TODO сделать нормальный эндпоинт с фильтрацией
+                foreach ($billingClient->getActiveCourses($user) as $activeCourse) {
+                    if ($activeCourse['code'] !== $course->getSymbolicName()) {
+                        continue;
+                    }
+
+                    $courseInfo['is_active'] = true;
+                    if (isset($activeCourse['valid_until'])) {
+                        $courseInfo['valid_until'] = new \DateTime($activeCourse['valid_until'])->format('Y-m-d H:i:s');
+                    }
+                    break;
+                }
+            }
+        } catch (BillingException $e) {
+            if ($e->getCode() >= 500) {
+                $this->addFlash('error', 'Billing сервис недоступен');
+            } else {
+                throw $e;
+            }
+        }
+
         return $this->render('course/show.html.twig', [
             'course' => $course,
+            'course_info' => $courseInfo,
+            'balance' => $balance,
             'lessons' => $course->getLessons(),
         ]);
+    }
+
+    #[Route('/{id}/pay', name: 'app_course_pay', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function pay(
+        Course $course,
+        #[CurrentUser] User $user,
+        Request $request,
+        BillingClient $billingClient,
+    ): Response {
+        if (!$this->isCsrfTokenValid('pay_course'.$course->getId(), $request->getPayload()->getString('_csrf_token'))) {
+            $this->addFlash('error', 'Некорректный csrf токен.');
+            return $this->redirectToRoute('app_course_show', ['id' => $course->getId()]);
+        }
+
+        try {
+            $billingClient->payCourse($user, $course);
+            $this->addFlash('success', 'Курс успешно оплачен');
+        } catch (BillingException $e) {
+            if ($e->getCode() === 406) {
+                $this->addFlash('error', 'Недостаточно средств');
+            } elseif ($e->getCode() >= 500) {
+                $this->addFlash('error', 'Billing сервис недоступен');
+            } else {
+                $this->addFlash('error', $e->getMessage());
+            }
+        }
+
+        return $this->redirectToRoute('app_course_show', ['id' => $course->getId()]);
     }
 
     #[Route('/{id}/edit', name: 'app_course_edit', methods: ['GET', 'POST'])]

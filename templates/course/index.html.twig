@@ -25,7 +25,7 @@
                                     <span class="badge bg-primary text-bg-dark">Аренда: {{ course.price }}</span>
                                 {% elseif course.type == 'free' %}
                                     <span class="badge bg-warning text-dark">Бесплатно!</span>
-                                {% elseif course.type == "paid" %}
+                                {% elseif course.type == "buy" %}
                                     <span class="badge bg-primary text-bg-dark">Покупка: {{ course.price }}</span>
                                 {% endif %}
                             {% endif %}

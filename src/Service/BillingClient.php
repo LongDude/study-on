@@ -301,13 +301,13 @@ class BillingClient
         $httpCode = $billingResponse['status'];
 
         if ($httpCode === 406) {
-            throw new BillingException('Недостаточно средств.', 406, $data['message']);
+            throw new BillingException('Недостаточно средств.', 406);
         }
         if ($httpCode === 401) {
-            throw new BillingException('Unauthorized.', 401, $data['errors']);
+            throw new BillingException('Unauthorized.', 401, $data['errors'] ?? []);
         }
         if ($httpCode === 400) {
-            throw new BillingException('Bad request: ' . json_encode($data), 400, $data['errors']);
+            throw new BillingException('Bad request: ' . json_encode($data), 400, $data['errors'] ?? []);
         }
         if ($httpCode >= 200 && $httpCode < 300) {
             return $data;

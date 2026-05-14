@@ -2,15 +2,10 @@
 
 namespace App\Security;
 
-use AllowDynamicProperties;
 use App\Exception\BillingException;
 use App\Service\BillingClient;
 use App\Service\TokenDecoderService;
-use PHPUnit\Framework\Exception;
-use Symfony\Component\BrowserKit\CookieJar;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use Symfony\Component\Routing\Exception\InvalidParameterException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
@@ -58,6 +53,8 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
     }
 
     /**
+     * Вызывается каждый раз, когда Security нужно
+     * получить / проверить пользователя
      * @throws UserNotFoundException
      */
     public function refreshUser(UserInterface $user): UserInterface

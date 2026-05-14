@@ -73,9 +73,13 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
         // Обновляем JWT токен если устарел
         $expirationDate = $this->tokenDecoderService->getTokenExpiration($user->getApiToken());
         if (empty($expirationDate) || $expirationDate - $this::EXPIRATION_THRESHOLD_SEC < time()) {
+            $refreshToken = $user->getRefreshToken();
+            if (empty($refreshToken)) {
+                throw new UserNotFoundException("Время жизни сессии истекло");
+            }
             // Expired token, try to refresh
             try {
-                $newApiToken = $this->billingClient->refreshToken($user->getRefreshToken());
+                $newApiToken = $this->billingClient->refreshToken($refreshToken);
                 $user->setApiToken($newApiToken);
             } catch (BillingException $e) {
                 if ($e->getCode() === 401) {

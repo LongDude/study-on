@@ -90,16 +90,20 @@ class User implements UserInterface
     {
         return [
             'email' => $this->getEmail(),
+            'roles' => $this->roles,
             'apiToken' => $this->apiToken,
             'refreshToken' => $this->refreshToken,
+            'balance' => $this->balance,
         ];
     }
 
     public function __unserialize(array $data): void
     {
         $this->setEmail($data['email']);
+        $this->setRoles($data['roles'] ?? []);
         $this->setApiToken($data['apiToken']);
         $this->setRefreshToken($data['refreshToken']);
+        $this->setBalance($data['balance'] ?? null);
     }
 
     public function getRefreshToken(): ?string

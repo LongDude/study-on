@@ -26,6 +26,7 @@ class CourseEditTest extends WebTestCase
         ->setName("Тестовый курс")
         ->setDescription("Курс для тестирования редактирования")
         ->setSymbolicName("test-course");
+
         try {
             $this->entityManager->persist($this->course);
             $this->entityManager->flush();
@@ -70,8 +71,10 @@ class CourseEditTest extends WebTestCase
 
     public function testAdminCourseEdit(): void
     {
+        $courseRepository = $this->entityManager->getRepository(Course::class);
+        $existingCourse = $courseRepository->findOneBy(['symbolic_name' => 'web-development-basics']);
         $this->authorizeRole("Admin");
-        $crawler = $this->client->request('GET', '/courses/' . $this->course->getId() . '/edit');
+        $crawler = $this->client->request('GET', '/courses/' . $existingCourse->getId() . '/edit');
         self::assertResponseIsSuccessful();
 
         $form = $crawler->selectButton("Сохранить")->form();
@@ -79,10 +82,11 @@ class CourseEditTest extends WebTestCase
         $form['course[description]'] = 'Обновленный курс для тестирования редактирования';
 
         $this->client->submit($form);
-        self::assertResponseRedirects('/courses/' . $this->course->getId());
-
+        self::assertResponseRedirects('/courses/' . $existingCourse->getId());
         $this->client->followRedirect();
-        self::assertSelectorTextContains('main h1', 'Обновленный курс');
+
+        self::assertSelectorExists("body");
+        self::assertSelectorTextContains('body main h1', 'Обновленный курс');
         self::assertSelectorTextContains('main p', 'Обновленный курс для тестирования редактирования');
     }
 

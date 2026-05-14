@@ -23,17 +23,6 @@ class CourseDeletionTest extends WebTestCase
         $this->client = static::createClient();
 
         $this->entityManager = static::$kernel->getContainer()->get('doctrine.orm.entity_manager');
-
-        $this->course = new Course()
-            ->setName("Тестовый курс")
-            ->setDescription("Курс для тестирования редактирования")
-            ->setSymbolicName("test-course");
-        try {
-            $this->entityManager->persist($this->course);
-            $this->entityManager->flush();
-        } catch (ORMException $e) {
-            $this->fail($e->getMessage());
-        }
     }
 
     /**
@@ -41,14 +30,13 @@ class CourseDeletionTest extends WebTestCase
      * @param $role string either 'User' or 'Admin'
      * @return void
      */
-    private function authorizeRole($role): void {
+    private function authorizeRole($role): void
+    {
         if ($role === 'User') {
             $this->loginBillingUser('user@test.local', 'user_password');
-        }
-        else if ($role === 'Admin') {
+        } elseif ($role === 'Admin') {
             $this->loginBillingUser('admin@test.local', 'admin_password');
-        }
-        else {
+        } else {
             throw new \ValueError("Expected 'User' or 'Admin', got $role");
         }
     }
@@ -73,14 +61,16 @@ class CourseDeletionTest extends WebTestCase
 
     public function testAdminCourseDeletion(): void
     {
+        $courseRepository = $this->entityManager->getRepository(Course::class);
+        $existingCourse = $courseRepository->findOneBy(['symbolic_name' => 'web-development-basics']);
         $this->authorizeRole("Admin");
-        $crawler = $this->client->request("GET", "/courses/" . $this->course->getId());
+        $crawler = $this->client->request("GET", "/courses/" . $existingCourse->getId());
 
         self::assertResponseIsSuccessful();
         $form = $crawler->selectButton("Удалить курс")->form();
         $this->client->submit($form);
 
         self::assertResponseRedirects("/courses");
-        self::assertNull($this->entityManager->find(Course::class, $this->course->getId()));
+        self::assertNull($this->entityManager->find(Course::class, $existingCourse->getId()));
     }
 }

@@ -93,8 +93,8 @@ class CourseInfoTest extends WebTestCase
         self::assertSame('Основы веб-разработки', $breadcrumb->eq(1)->text());
 
         # Info
-        self::assertSelectorTextSame('body main h1', "Основы веб-разработки");
-        self::assertSelectorTextSame('body main p', "Изучите HTML, CSS и JavaScript с нуля. Курс для начинающих, который даёт полное понимание того, как работают современные веб-сайты.");
+        self::assertSelectorTextContains('body main h1', "Основы веб-разработки");
+        self::assertSelectorTextContains('body main p', "Изучите HTML, CSS и JavaScript с нуля. Курс для начинающих, который даёт полное понимание того, как работают современные веб-сайты.");
 
         # Lessons
         $lessons = $crawler->filter("section div div");

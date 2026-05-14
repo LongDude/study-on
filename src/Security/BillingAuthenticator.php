@@ -48,12 +48,12 @@ class BillingAuthenticator extends AbstractLoginFormAuthenticator
 
         $email = $request->getPayload()->getString('email');
         if ('' === $email) {
-            throw new CustomUserMessageAuthenticationException('Почта не должен быть пустым.');
+            throw new CustomUserMessageAuthenticationException('Почта не должна быть пустой.');
         }
 
         $password = $request->getPayload()->getString('password');
         if ('' === $password) {
-            throw new CustomUserMessageAuthenticationException('Почта не должен быть пустым.');
+            throw new CustomUserMessageAuthenticationException('Пароль не должен быть пустым.');
         }
         $userIdentifier = null;
         try {

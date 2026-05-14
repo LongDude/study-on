@@ -19,9 +19,9 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
     private const int EXPIRATION_THRESHOLD_SEC = 10;
 
     public function __construct(
-        private readonly BillingClient $billingClient,
-        private readonly TokenDecoderService  $tokenDecoderService,
-        private readonly RequestStack $requestStack,
+        private readonly BillingClient       $billingClient,
+        private readonly TokenDecoderService $tokenDecoderService,
+        private readonly RequestStack        $requestStack,
     ) {
     }
 
@@ -45,7 +45,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
         } catch (BillingException $e) {
             if ($e->getCode() >= 500) {
                 throw new CustomUserMessageAuthenticationException(
-                    "Сервис недоступен, повторите попытку позже"
+                    "Сервис недоступен, повторите попытку позже",
                 );
             }
             throw new UserNotFoundException("Пользователь не найден");
@@ -64,7 +64,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
         }
         if (empty($user->getApiToken())) {
             throw new UserNotFoundException(
-                sprintf('Cannot refresh user with an empty API token: %s', $user->getEmail())
+                sprintf('Cannot refresh user with an empty API token: %s', $user->getEmail()),
             );
         }
 

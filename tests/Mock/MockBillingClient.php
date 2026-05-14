@@ -252,6 +252,17 @@ class MockBillingClient extends BillingClient
         return $response;
     }
 
+    public function deposit(User $user, float $amount): void
+    {
+        if ($amount <= 0) {
+            throw new BillingException('Неверная сумма пополнения', 400);
+        }
+
+        $billingUser = $this->getCurrentUser((string) $user->getApiToken());
+        $billingUser->setBalance((float) $billingUser->getBalance() + $amount);
+        $this->addTransaction((string) $billingUser->getEmail(), null, $amount, type: 'deposit');
+    }
+
     public function getActiveCourses(User $user): array
     {
         $billingUser = $this->getCurrentUser((string) $user->getApiToken());

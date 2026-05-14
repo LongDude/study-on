@@ -11,6 +11,7 @@ use Symfony\Component\BrowserKit\CookieJar;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Routing\Exception\InvalidParameterException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -48,7 +49,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
             return $usr;
         } catch (BillingException $e) {
             if ($e->getCode() >= 500) {
-                throw new UnsupportedUserException(
+                throw new CustomUserMessageAuthenticationException(
                     "Сервис недоступен, повторите попытку позже"
                 );
             }
@@ -70,37 +71,23 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
             );
         }
 
-        // Обновляем JWT токен если устарел
+        // Если токен свежий - обновение не нужно
         $expirationDate = $this->tokenDecoderService->getTokenExpiration($user->getApiToken());
-        if (empty($expirationDate) || $expirationDate - $this::EXPIRATION_THRESHOLD_SEC < time()) {
-            $refreshToken = $user->getRefreshToken();
-            if (empty($refreshToken)) {
+        if ($expirationDate && $expirationDate - $this::EXPIRATION_THRESHOLD_SEC >= time()) {
+            return $user;
+        }
+
+        // Токен устарел - обновление через сервис
+        try {
+            $newApiToken = $this->billingClient->refreshToken($user->getRefreshToken());
+            $user->setApiToken($newApiToken);
+        } catch (BillingException $e) {
+            if ($e->getCode() === 401) {
                 throw new UserNotFoundException("Время жизни сессии истекло");
-            }
-            // Expired token, try to refresh
-            try {
-                $newApiToken = $this->billingClient->refreshToken($refreshToken);
-                $user->setApiToken($newApiToken);
-            } catch (BillingException $e) {
-                if ($e->getCode() === 401) {
-                    throw new UserNotFoundException("Время жизни сессии истекло");
-                }
-                throw new UnsupportedUserException("Сервис временно недоступен");
             }
         }
 
-        try {
-            $curUsr = $this->billingClient->getCurrentUser($user->getApiToken());
-            $curUsr->setApiToken($user->getApiToken());
-            return $curUsr;
-        } catch (BillingException $e) {
-            if ($e->getCode() === 401) {
-                throw new UserNotFoundException(
-                    "Ошибка обновления сессии пользователя"
-                );
-            }
-            throw new UnsupportedUserException("Сервис временно недоступен");
-        }
+        return $user;
     }
 
     /**

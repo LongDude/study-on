@@ -122,6 +122,12 @@ class BillingClient
         if ($httpCode === 401) {
             throw new BillingException('Invalid credentials.', 401);
         }
+
+        // Перехват 500
+        if ($httpCode >= 500) {
+            throw new BillingException('Billing service error.', $httpCode);
+        }
+
         // No token provided
         if (!isset($data['token'], $data['refresh_token'])) {
             $resp = json_encode($data);

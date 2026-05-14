@@ -84,6 +84,11 @@ class BillingClient
             throw new BillingException("cURL error: {$curlError}", 503);
         }
 
+        // Billing exception / unavailiable
+        if ($httpCode >= 500) {
+            throw new BillingException('Billing service error.', $httpCode);
+        }
+
         // Parse response
         try {
             $decodedResponse = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
@@ -121,11 +126,6 @@ class BillingClient
         // Invalid credentials - bad request or nonexisting user
         if ($httpCode === 401) {
             throw new BillingException('Invalid credentials.', 401);
-        }
-
-        // Перехват 500
-        if ($httpCode >= 500) {
-            throw new BillingException('Billing service error.', $httpCode);
         }
 
         // No token provided
@@ -228,6 +228,8 @@ class BillingClient
         $billingResponse = $this->makeCURLRequest($url, 'POST', ["refresh_token" => $refreshToken]);
         $data = $billingResponse['data'];
         $httpCode = $billingResponse['status'];
+
+
 
         if ($httpCode === 401) {
             throw new BillingException('Unauthorized.', 401);

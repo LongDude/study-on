@@ -71,21 +71,22 @@ class SecurityController extends AbstractController
                     $expandedTransactions[] = $transaction;
                 }
             } catch (BillingException $e) {
-                $expandedTransactions = [];
-                $this->addFlash($e->getMessage(), 'error');
+                $this->addFlash('error', $e->getMessage());
             }
 
-            return $this->render('security/profile.html.twig', [
-                'email' => $freshProfile->getEmail(),
-                'balance' => $freshProfile->getBalance(),
-                "transactions" => $expandedTransactions,
-            ]);
         } catch (BillingException $e) {
-            if ($e->getCode() >= 400) {
-                return $this->redirectToRoute('app_login', status: 401);
+            if ($e->getCode() >= 500) {
+                $this->addFlash('error', 'Billing сервис временно недоступен.');
+            } elseif ($e->getCode() >= 400) {
+                return $this->redirectToRoute('app_login');
             }
-            return new Response('Сервис временно недоступен. Повторите попытку позже', 500);
         }
+
+        return $this->render('security/profile.html.twig', [
+            'email' => ($freshProfile ?? $user)->getEmail(),
+            'balance' => ($freshProfile ?? $user)->getBalance(),
+            "transactions" => $expandedTransactions ?? [],
+        ]);
     }
 
     #[Route(path: '/register', name: 'app_register')]

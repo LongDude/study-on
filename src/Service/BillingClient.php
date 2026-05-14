@@ -92,7 +92,7 @@ class BillingClient
         try {
             $decodedResponse = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            throw new BillingException($e->getMessage(), $e->getCode(), previous: $e);
+            $decodedResponse = [];
         }
 
         // Somehow empty response from Billing

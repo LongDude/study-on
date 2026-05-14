@@ -14,7 +14,7 @@
                         <h4 class="mb-0">Профиль пользователя</h4>
                     </div>
                     <div class="card-body">
-                        <ul class="list-group list-group-flush">
+                        <ul class="list-group list-group-flush ">
                             <li class="list-group-item">
                                 <strong>Имя:</strong> {{ email }}
                             </li>
@@ -25,11 +25,47 @@
                                 <strong>Баланс:</strong> {{ balance }}
                             </li>
                         </ul>
+                        <div class="mt-3 text-end">
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#depositModal">
+                                Пополнить баланс
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="depositModal" tabindex="-1" aria-labelledby="depositModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form class="modal-content" method="post" action="{{ path('app_profile_deposit') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="depositModalLabel">Пополнить баланс</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('profile_deposit') }}">
+                    <label for="depositAmount" class="form-label">Сумма</label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="depositAmount"
+                        name="amount"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="0.00"
+                        inputmode="decimal"
+                        required
+                    >
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">ОК</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-md-12">

@@ -59,13 +59,12 @@ class SecurityController extends AbstractController
                 $transactions = $billingClient->getTransactionHistory($user);
                 $expandedTransactions = [];
                 foreach ($transactions as $transaction) {
-                    if (!isset($transaction['course_code'])) {
-                        continue;
-                    }
-                    $protocourse = $courseRepository->findOneBy(['symbolic_name' => $transaction['course_code']]);
-                    if ($protocourse) {
-                        $transaction['course_name'] = $protocourse->getName();
-                        $transaction['course_id'] = $protocourse->getId();
+                    if (isset($transaction['course_code'])) {
+                        $protocourse = $courseRepository->findOneBy(['symbolic_name' => $transaction['course_code']]);
+                        if ($protocourse) {
+                            $transaction['course_name'] = $protocourse->getName();
+                            $transaction['course_id'] = $protocourse->getId();
+                        }
                     }
                     $transaction["created_at"] = new \DateTime($transaction['created_at'])->format('Y-m-d H:i:s');
                     $expandedTransactions[] = $transaction;
@@ -87,6 +86,46 @@ class SecurityController extends AbstractController
             'balance' => ($freshProfile ?? $user)->getBalance(),
             "transactions" => $expandedTransactions ?? [],
         ]);
+    }
+
+    #[Route(path: '/profile/deposit', name: 'app_profile_deposit', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function deposit(
+        #[CurrentUser] $user,
+        Request $request,
+        BillingClient $billingClient,
+    ): RedirectResponse {
+        $submittedToken = $request->request->getString('_csrf_token');
+        if (!$this->isCsrfTokenValid('profile_deposit', $submittedToken)) {
+            $this->addFlash('error', 'Некорректный csrf токен.');
+            return $this->redirectToRoute('app_profile');
+        }
+
+        $amountRaw = trim($request->request->getString('amount'));
+        if (!preg_match('/^(?:[1-9]\d*|0)(?:[.,]\d{1,2})?$/', $amountRaw)) {
+            $this->addFlash('error', 'Введите положительную сумму с точностью до двух знаков.');
+            return $this->redirectToRoute('app_profile');
+        }
+
+        $amount = (float) str_replace(',', '.', $amountRaw);
+        if ($amount <= 0) {
+            $this->addFlash('error', 'Сумма пополнения должна быть больше нуля.');
+            return $this->redirectToRoute('app_profile');
+        }
+
+        try {
+            $billingClient->deposit($user, $amount);
+            $this->addFlash('success', sprintf('Баланс пополнен на %.2f.', $amount));
+        } catch (BillingException $e) {
+            if ($e->getCode() === 401) {
+                $this->addFlash('error', 'Сессия истекла. Войдите снова.');
+                return $this->redirectToRoute('app_login');
+            }
+            $this->addFlash('error', $e->getCode() >= 500 ? 'Billing сервис временно недоступен.' : $e->getMessage());
+            throw $e;
+        }
+
+        return $this->redirectToRoute('app_profile');
     }
 
     #[Route(path: '/register', name: 'app_register')]

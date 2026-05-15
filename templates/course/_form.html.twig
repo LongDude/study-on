@@ -1,4 +1,30 @@
-{{ form_start(form) }}
+{{ form_start(form, { attr: { data_course_price_form: true } }) }}
     {{ form_widget(form) }}
     <button class="btn btn-outline-success">{{ button_label|default('Save') }}</button>
 {{ form_end(form) }}
+
+<script>
+    (() => {
+        const form = document.querySelector('[data-course-price-form]');
+        if (!form) {
+            return;
+        }
+
+        const type = form.querySelector('[name$="[type]"]');
+        const price = form.querySelector('[name$="[price]"]');
+        if (!type || !price) {
+            return;
+        }
+
+        const syncPriceState = () => {
+            const isFree = type.value === 'free';
+            price.disabled = isFree;
+            if (isFree) {
+                price.value = '0';
+            }
+        };
+
+        type.addEventListener('change', syncPriceState);
+        syncPriceState();
+    })();
+</script>

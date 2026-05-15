@@ -289,6 +289,38 @@ class BillingClient
     /**
      * @throws BillingException
      */
+    public function createCourse(Course $course, string $type, float $price, string $token): void
+    {
+        $url = $this->billingUrl . '/api/v1/courses';
+        $billingResponse = $this->makeCURLRequest(
+            $url,
+            'POST',
+            $this->buildCoursePayload($course, $type, $price),
+            $token,
+        );
+
+        $this->assertCourseWriteResponse($billingResponse);
+    }
+
+    /**
+     * @throws BillingException
+     */
+    public function updateCourse(Course $course, string $type, float $price, string $token, string $currentCode): void
+    {
+        $url = $this->billingUrl . '/api/v1/courses/' . $currentCode;
+        $billingResponse = $this->makeCURLRequest(
+            $url,
+            'POST',
+            $this->buildCoursePayload($course, $type, $price),
+            $token,
+        );
+
+        $this->assertCourseWriteResponse($billingResponse);
+    }
+
+    /**
+     * @throws BillingException
+     */
     public function payCourse(User $user, Course $course): array
     {
         $url = $this->billingUrl . '/api/v1/courses/' . $course->getSymbolicName() . '/pay';
@@ -408,6 +440,44 @@ class BillingClient
         }
         if ($httpCode >= 200 && $httpCode < 300) {
             return $data;
+        }
+
+        throw new BillingException('Billing сервис временно недоступен', $httpCode);
+    }
+
+    private function buildCoursePayload(Course $course, string $type, float $price): array
+    {
+        return [
+            'type' => $type,
+            'title' => $course->getName(),
+            'code' => $course->getSymbolicName(),
+            'price' => $type === 'free' ? 0 : $price,
+        ];
+    }
+
+    /**
+     * @throws BillingException
+     */
+    private function assertCourseWriteResponse(array $billingResponse): void
+    {
+        $data = $billingResponse['data'];
+        $httpCode = $billingResponse['status'];
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return;
+        }
+
+        if ($httpCode === 400) {
+            throw new BillingException('Bad request: ' . json_encode($data), 400, $data['errors'] ?? []);
+        }
+        if ($httpCode === 401) {
+            throw new BillingException('Unauthorized.', 401, $data['errors'] ?? []);
+        }
+        if ($httpCode === 403) {
+            throw new BillingException('Forbidden.', 403, $data['errors'] ?? []);
+        }
+        if ($httpCode === 404) {
+            throw new BillingException('Course not found.', 404, $data['errors'] ?? []);
         }
 
         throw new BillingException('Billing сервис временно недоступен', $httpCode);

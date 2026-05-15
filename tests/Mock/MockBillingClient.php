@@ -221,6 +221,39 @@ class MockBillingClient extends BillingClient
         return self::formatCourse($this->courses[$course_code]);
     }
 
+    public function createCourse(Course $course, string $type, float $price, string $token): void
+    {
+        $this->assertAdminToken($token);
+        $code = (string) $course->getSymbolicName();
+        if (isset($this->courses[$code])) {
+            throw new BillingException('Bad request.', 400, [
+                'symbolic_name' => 'Course with same code already exists',
+            ]);
+        }
+
+        $this->courses[$code] = [
+            'code' => $code,
+            'type' => $type,
+            'price' => $type === 'free' ? 0.0 : $price,
+        ];
+    }
+
+    public function updateCourse(Course $course, string $type, float $price, string $token, string $currentCode): void
+    {
+        $this->assertAdminToken($token);
+        if (!isset($this->courses[$currentCode])) {
+            throw new BillingException('Course not found.', 404);
+        }
+
+        $code = (string) $course->getSymbolicName();
+        unset($this->courses[$currentCode]);
+        $this->courses[$code] = [
+            'code' => $code,
+            'type' => $type,
+            'price' => $type === 'free' ? 0.0 : $price,
+        ];
+    }
+
     public function payCourse(User $user, Course $course): array
     {
         $billingUser = $this->getCurrentUser((string) $user->getApiToken());
@@ -322,6 +355,14 @@ class MockBillingClient extends BillingClient
         }
 
         return $transactions;
+    }
+
+    private function assertAdminToken(string $token): void
+    {
+        $user = $this->getCurrentUser($token);
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles(), true)) {
+            throw new BillingException('Forbidden.', 403);
+        }
     }
 
     private static function formatCourse(array $course): array

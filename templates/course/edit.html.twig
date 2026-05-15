@@ -10,12 +10,7 @@
 {% block body %}
     <h1>{{ course.name }}: Редактировать курс</h1>
 
-    {{ form_start(form) }}
-        {{ form_row(form.name) }}
-        {{ form_row(form.description) }}
-        {{ form_row(form.symbolic_name) }}
-        <button class="btn btn-outline-success">Сохранить</button>
-    {{ form_end(form) }}
+    {{ include('course/_form.html.twig', {'button_label': "Сохранить"}) }}
 
     <hr class="hr"/>
 

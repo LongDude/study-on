@@ -28,7 +28,7 @@ jobs:
                     echo "POSTGRES_DB=${{ secrets.APP_POSTGRES_DB }}" >> .env.local
                     echo "POSTGRES_USER=${{ secrets.APP_POSTGRES_USER }}" >> .env.local
                     echo "POSTGRES_PASSWORD=${{ secrets.APP_POSTGRES_PASSWORD }}" >> .env.local
-                    echo "DATABASE_URL=pgsql://${{ secrets.APP_POSTGRES_USER }}:${{ secrets.APP_POSTGRES_PASSWORD }}@study-on-postgres-1:5432/${{ secrets.APP_POSTGRES_DB }}" >> .env.local
+                    echo "DATABASE_URL=pgsql://${{ secrets.APP_POSTGRES_USER }}:${{ secrets.APP_POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.APP_POSTGRES_DB }}" >> .env.local
                     composer install
 
             -   name: Setting Docker
@@ -39,21 +39,22 @@ jobs:
                     mkdir ~/.yarn
                     # нужно создать сеть, так как в github Actions study-on изолирован от биллинга
                     docker network create study-onbilling_default
-                    docker compose build
-                    docker compose up -d
-                    docker compose run -u root node npm ci
-                    docker compose run -u root node npx encore dev
+                    docker compose --env-file .env --env-file .env.local build
+                    docker compose --env-file .env --env-file .env.local up -d
+                    docker compose --env-file .env --env-file .env.local exec -T postgres sh -c 'until pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done'
+                    docker compose --env-file .env --env-file .env.local run -u root node npm ci
+                    docker compose --env-file .env --env-file .env.local run -u root node npx encore dev
                     docker ps -a
             -   name: Setting test environment and DB
                 # скорректируйте название БД и контейнера, если нужно
                 run: |
-                    echo "DATABASE_URL=pgsql://${{ secrets.DB_TEST_USER }}:${{ secrets.DB_TEST_PASSWORD }}@study-on-postgres-1:5432/${{secrets.DB_TEST_DBNAME}}" >> .env.test.local
+                    echo "DATABASE_URL=pgsql://${{ secrets.DB_TEST_USER }}:${{ secrets.DB_TEST_PASSWORD }}@postgres:5432/${{secrets.DB_TEST_DBNAME}}" >> .env.test.local
                     ls -la
                     docker ps -a
-                    docker compose exec -T php bin/console doctrine:database:drop --force --env=test || true
-                    docker compose exec -T php bin/console doctrine:database:create --env=test
-                    docker compose exec -T php bin/console doctrine:migrations:migrate -n --env=test
-                    docker compose exec -T php bin/console doctrine:fixtures:load -n --env=test
+                    docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:database:drop --force --env=test || true
+                    docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:database:create --env=test
+                    docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:migrations:migrate -n --env=test
+                    docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:fixtures:load -n --env=test
             -   name: run PHPUnit
                 run: |
-                    docker compose exec -T php sh -c 'APP_ENV=test bin/phpunit'
+                    docker compose --env-file .env --env-file .env.local exec -T php sh -c 'APP_ENV=test bin/phpunit'

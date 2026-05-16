@@ -11,47 +11,47 @@ jobs:
         #   тут представлен пример только для запуска тестов. Можно еще проверять код-стайл и доступность документации
         #   часто встречается на рабочих проектах
         steps:
-            - uses: actions/checkout@v4
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: '8.4.5'
-                  extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql
-                  coverage: pcov
-                  tools: composer
-            - name: Setting environment and composer
+            -   uses: actions/checkout@v4
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: '8.4.5'
+                    extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql
+                    coverage: pcov
+                    tools: composer
+            -   name: Setting environment and composer
                 # скорректируйте название БД и контейнера, если нужно
-              run: |
-                echo "APP_SECRET=${{ secrets.app_secret }}" >> .env.local
-                echo "TRUSTED_HOSTS=${{ secrets.app_trusted_hosts }}"" >> .env.local
-                echo "POSTGRES_DB=${{ secrets.app_postgres_db }}" >> .env.local
-                echo "POSTGRES_USER=${{ secrets.app_postgres_user }}" >> .env.local
-                echo "POSTGRES_PASSWORD=${{ secrets.app_postgres_password }}" >> .env.local
-                echo "DATABASE_URL=pgsql://${{ secrets.app_postgres_user }}:${{ secrets.app_postgres_password }}@postgres:5432/${{ secrets.app_postgres_db }}" >> .env.local
-                composer install
-            - name: Setting Docker
-              run: |
-                       sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                       sudo chmod +x /usr/local/bin/docker-compose
-                       docker-compose --version
-                       mkdir ~/.yarn
-                # нужно создать сеть, так как в github Actions study-on изолирован от биллинга
-                       docker network create study-onbilling_default
-                       docker-compose build
-                       docker-compose up -d
-                       docker-compose run -u root node yarn install
-                       docker-compose run -u root node yarn encore dev
-                       docker ps -a
-            - name: Setting test environment and DB
+                run: |
+                    echo "APP_SECRET=${{ secrets.app_secret }}" >> .env.local
+                    echo "TRUSTED_HOSTS=${{ secrets.app_trusted_hosts }}"" >> .env.local
+                    echo "POSTGRES_DB=${{ secrets.app_postgres_db }}" >> .env.local
+                    echo "POSTGRES_USER=${{ secrets.app_postgres_user }}" >> .env.local
+                    echo "POSTGRES_PASSWORD=${{ secrets.app_postgres_password }}" >> .env.local
+                    echo "DATABASE_URL=pgsql://${{ secrets.app_postgres_user }}:${{ secrets.app_postgres_password }}@postgres:5432/${{ secrets.app_postgres_db }}" >> .env.local
+                    composer install
+            -   name: Setting Docker
+                run: |
+                    sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                    sudo chmod +x /usr/local/bin/docker-compose
+                    docker-compose --version
+                    mkdir ~/.yarn
+                    # нужно создать сеть, так как в github Actions study-on изолирован от биллинга
+                    docker network create study-onbilling_default
+                    docker-compose build
+                    docker-compose up -d
+                    docker-compose run -u root node yarn install
+                    docker-compose run -u root node yarn encore dev
+                    docker ps -a
+            -   name: Setting test environment and DB
                 # скорректируйте название БД и контейнера, если нужно
-              run: |
-                  echo "DATABASE_URL=pgsql://${{ secrets.db_test_user }}:${{ secrets.db_test_password }}@postgres:5432/${{secrets.db_test_dbname}}" >> .env.test.local
-                  ls -la
-                  docker ps -a
-                  docker-compose exec -T php bin/console doctrine:database:drop --force --env=test || true
-                  docker-compose exec -T php bin/console doctrine:database:create --env=test
-                  docker-compose exec -T php bin/console doctrine:migrations:migrate -n --env=test
-                  docker-compose exec -T php bin/console doctrine:fixtures:load -n --env=test
-            - name: run PHPUnit
-              run: |
-                  docker-compose exec -T php sh -c 'APP_ENV=test bin/phpunit'
+                run: |
+                    echo "DATABASE_URL=pgsql://${{ secrets.db_test_user }}:${{ secrets.db_test_password }}@postgres:5432/${{secrets.db_test_dbname}}" >> .env.test.local
+                    ls -la
+                    docker ps -a
+                    docker-compose exec -T php bin/console doctrine:database:drop --force --env=test || true
+                    docker-compose exec -T php bin/console doctrine:database:create --env=test
+                    docker-compose exec -T php bin/console doctrine:migrations:migrate -n --env=test
+                    docker-compose exec -T php bin/console doctrine:fixtures:load -n --env=test
+            -   name: run PHPUnit
+                run: |
+                    docker-compose exec -T php sh -c 'APP_ENV=test bin/phpunit'

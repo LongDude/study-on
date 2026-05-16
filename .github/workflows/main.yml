@@ -35,14 +35,14 @@ jobs:
                 run: |
                     sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
                     sudo chmod +x /usr/local/bin/docker-compose
-                    docker-compose --version
+                    docker compose --version
                     mkdir ~/.yarn
                     # нужно создать сеть, так как в github Actions study-on изолирован от биллинга
                     docker network create study-onbilling_default
                     docker compose build
                     docker compose up -d
-                    docker compose run -u root --entrypoint sh node -lc "corepack enable && yarn install"
-                    docker compose run -u root --entrypoint sh node -lc "corepack enable && yarn encore dev"
+                    docker compose run -u root node npm ci
+                    docker compose run -u root node npx encore dev
                     docker ps -a
             -   name: Setting test environment and DB
                 # скорректируйте название БД и контейнера, если нужно

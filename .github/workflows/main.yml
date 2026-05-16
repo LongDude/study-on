@@ -24,12 +24,13 @@ jobs:
                 # скорректируйте название БД и контейнера, если нужно
                 run: |
                     echo "APP_SECRET=${{ secrets.APP_SECRET }}" >> .env.local
-                    echo "TRUSTED_HOSTS=${{ secrets.app_trusted_hosts }}"" >> .env.local
-                    echo "POSTGRES_DB=${{ secrets.app_postgres_db }}" >> .env.local
-                    echo "POSTGRES_USER=${{ secrets.app_postgres_user }}" >> .env.local
-                    echo "POSTGRES_PASSWORD=${{ secrets.app_postgres_password }}" >> .env.local
-                    echo "DATABASE_URL=pgsql://${{ secrets.app_postgres_user }}:${{ secrets.app_postgres_password }}@postgres:5432/${{ secrets.app_postgres_db }}" >> .env.local
+                    echo "TRUSTED_HOSTS=${{ secrets.APP_TRUSTED_HOSTS }}" >> .env.local
+                    echo "POSTGRES_DB=${{ secrets.APP_POSTGRES_DB }}" >> .env.local
+                    echo "POSTGRES_USER=${{ secrets.APP_POSTGRES_USER }}" >> .env.local
+                    echo "POSTGRES_PASSWORD=${{ secrets.APP_POSTGRES_PASSWORD }}" >> .env.local
+                    echo "DATABASE_URL=pgsql://${{ secrets.APP_POSTGRES_USER }}:${{ secrets.APP_POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.APP_POSTGRES_DB }}" >> .env.local
                     composer install
+
             -   name: Setting Docker
                 run: |
                     sudo curl -L "https://github.com/docker/compoapp_secretse/releases/download/v2.27.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -46,7 +47,7 @@ jobs:
             -   name: Setting test environment and DB
                 # скорректируйте название БД и контейнера, если нужно
                 run: |
-                    echo "DATABASE_URL=pgsql://${{ secrets.db_test_user }}:${{ secrets.db_test_password }}@postgres:5432/${{secrets.db_test_dbname}}" >> .env.test.local
+                    echo "DATABASE_URL=pgsql://${{ secrets.DB_TEST_USER }}:${{ secrets.DB_TEST_PASSWORD }}@postgres:5432/${{secrets.DB_TEST_DBNAME}}" >> .env.test.local
                     ls -la
                     docker ps -a
                     docker-compose exec -T php bin/console doctrine:database:drop --force --env=test || true

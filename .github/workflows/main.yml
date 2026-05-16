@@ -28,7 +28,7 @@ jobs:
                     echo "POSTGRES_DB=${{ secrets.APP_POSTGRES_DB }}" >> .env.local
                     echo "POSTGRES_USER=${{ secrets.APP_POSTGRES_USER }}" >> .env.local
                     echo "POSTGRES_PASSWORD=${{ secrets.APP_POSTGRES_PASSWORD }}" >> .env.local
-                    echo "DATABASE_URL=pgsql://${{ secrets.APP_POSTGRES_USER }}:${{ secrets.APP_POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.APP_POSTGRES_DB }}" >> .env.local
+                    echo "DATABASE_URL=pgsql://${{ secrets.APP_POSTGRES_USER }}:${{ secrets.APP_POSTGRES_PASSWORD }}@study-on-postgres-1:5432/${{ secrets.APP_POSTGRES_DB }}" >> .env.local
                     composer install
 
             -   name: Setting Docker
@@ -47,7 +47,7 @@ jobs:
             -   name: Setting test environment and DB
                 # скорректируйте название БД и контейнера, если нужно
                 run: |
-                    echo "DATABASE_URL=pgsql://${{ secrets.DB_TEST_USER }}:${{ secrets.DB_TEST_PASSWORD }}@postgres:5432/${{secrets.DB_TEST_DBNAME}}" >> .env.test.local
+                    echo "DATABASE_URL=pgsql://${{ secrets.DB_TEST_USER }}:${{ secrets.DB_TEST_PASSWORD }}@study-on-postgres-1:5432/${{secrets.DB_TEST_DBNAME}}" >> .env.test.local
                     ls -la
                     docker ps -a
                     docker compose exec -T php bin/console doctrine:database:drop --force --env=test || true

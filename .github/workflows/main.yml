@@ -42,8 +42,8 @@ jobs:
                     docker compose --env-file .env --env-file .env.local build
                     docker compose --env-file .env --env-file .env.local up -d
                     docker compose --env-file .env --env-file .env.local exec -T postgres sh -c 'until pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done'
-                    docker compose --env-file .env --env-file .env.local exec -T php bin/console make:migration
-                    docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:migration:migrate
+                    docker compose --env-file .env --env-file .env.local exec -T -u root php bin/console make:migration
+                    docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:migrations:migrate -n
                     docker compose --env-file .env --env-file .env.local run -u root node npm ci
                     docker compose --env-file .env --env-file .env.local run -u root node npx encore dev
                     docker ps -a

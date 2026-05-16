@@ -28,7 +28,6 @@ jobs:
                 echo "POSTGRES_USER=${{ secrets.app_postgres_user }}" >> .env.local
                 echo "POSTGRES_PASSWORD=${{ secrets.app_postgres_password }}" >> .env.local
                 echo "DATABASE_URL=pgsql://${{ secrets.app_postgres_user }}:${{ secrets.app_postgres_password }}@postgres:5432/${{ secrets.app_postgres_db }}" >> .env.local
-
                 composer install
             - name: Setting Docker
               run: |

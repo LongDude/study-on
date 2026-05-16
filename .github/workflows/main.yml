@@ -42,6 +42,8 @@ jobs:
                     docker compose --env-file .env --env-file .env.local build
                     docker compose --env-file .env --env-file .env.local up -d
                     docker compose --env-file .env --env-file .env.local exec -T postgres sh -c 'until pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 1; done'
+                    docker compose --env-file .env --env-file .env.local exec -T php bin/console make:migration
+                    docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:migration:migrate
                     docker compose --env-file .env --env-file .env.local run -u root node npm ci
                     docker compose --env-file .env --env-file .env.local run -u root node npx encore dev
                     docker ps -a
@@ -51,7 +53,7 @@ jobs:
                     echo "DATABASE_URL=pgsql://${{ secrets.DB_TEST_USER }}:${{ secrets.DB_TEST_PASSWORD }}@postgres:5432/${{secrets.DB_TEST_DBNAME}}" >> .env.test.local
                     ls -la
                     docker ps -a
-                    docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:database:drop --force --env=test || true
+                    docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:database:drop --force --if-exists --env=test || true
                     docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:database:create --env=test
                     docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:migrations:migrate -n --env=test
                     docker compose --env-file .env --env-file .env.local exec -T php bin/console doctrine:fixtures:load -n --env=test

@@ -41,8 +41,8 @@ jobs:
                     docker network create study-onbilling_default
                     docker compose build
                     docker compose up -d
-                    docker compose run -u root node yarn install
-                    docker compose run -u root node yarn encore dev
+                    docker compose run -u root --entrypoint sh node -lc "corepack enable && yarn install"
+                    docker compose run -u root --entrypoint sh node -lc "corepack enable && yarn encore dev"
                     docker ps -a
             -   name: Setting test environment and DB
                 # скорректируйте название БД и контейнера, если нужно
